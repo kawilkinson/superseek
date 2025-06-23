@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/kawilkinson/search-engine/services/crawler/internal/spider"
+	"github.com/kawilkinson/search-engine/internal/spider"
 )
 
 func main() {
