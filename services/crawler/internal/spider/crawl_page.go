@@ -2,7 +2,6 @@ package spider
 
 import (
 	"fmt"
-	"net/url"
 )
 
 func (cfg *Config) CrawlPage(rawCurrentURL string) {
@@ -14,18 +13,8 @@ func (cfg *Config) CrawlPage(rawCurrentURL string) {
 
 	if cfg.isMaxPagesReached() {
 		cfg.runOnce.Do(func() {
-			fmt.Printf("max pages reached, exiting WebGopher early...\n")
+			fmt.Printf("max pages reached...\n")
 		})
-		return
-	}
-
-	currentURL, err := url.Parse(rawCurrentURL)
-	if err != nil {
-		fmt.Printf("error trying to parse current URL: %s\n%v\n", rawCurrentURL, err)
-		return
-	}
-
-	if currentURL.Hostname() != cfg.baseURL.Hostname() {
 		return
 	}
 
@@ -48,7 +37,7 @@ func (cfg *Config) CrawlPage(rawCurrentURL string) {
 		return
 	}
 
-	parsedURLs, err := getURLsFromHTML(currentHTML, cfg.baseURL.String())
+	parsedURLs, err := getURLsFromHTML(currentHTML, rawCurrentURL)
 	if err != nil {
 		fmt.Printf("error trying to parse URLs from HTML of %s\n%v\n", rawCurrentURL, err)
 		return

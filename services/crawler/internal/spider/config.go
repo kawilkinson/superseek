@@ -7,13 +7,16 @@ import (
 )
 
 type Config struct {
-	maxPages           int
-	Pages              map[string]int
-	baseURL            *url.URL
 	mu                 *sync.Mutex
-	concurrencyControl chan struct{}
 	Wg                 *sync.WaitGroup
 	runOnce            sync.Once
+	Pages              map[string]int
+	Outlinks           map[string]int
+	Backlinks          map[string]int
+	Images             map[string][]int
+	baseURL            *url.URL
+	concurrencyControl chan struct{}
+	maxPages           int
 }
 
 func (cfg *Config) addPageVisit(normalizedURL string) (isFirst bool) {
