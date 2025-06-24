@@ -3,10 +3,14 @@ package spider
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"golang.org/x/net/html"
 )
+
+// Initialize a compiled regex to make sure characters are in ASCII
+var nonASCIIRegex = regexp.MustCompile(`[^\x20-\x7E]`)
 
 func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
 	htmlReader := strings.NewReader(htmlBody)
@@ -29,16 +33,22 @@ func recurseHTMLTree(node *html.Node, parsedURLs []string, rawBaseURL string) []
 	if node.Type == html.ElementNode && node.Data == "a" {
 		for _, anchor := range node.Attr {
 			if anchor.Key == "href" {
-				href := anchor.Val
-				hrefURL, err := url.Parse(href)
+				rawHref := anchor.Val
+
+				// Skip any malformed URLs and any non-ASCII URLs
+				if strings.ContainsAny(rawHref, " <>\"") || nonASCIIRegex.MatchString(rawHref) {
+					continue
+				}
+
+				hrefURL, err := url.Parse(rawHref)
 				if err != nil {
 					break
 				}
-
 				baseURL, err := url.Parse(rawBaseURL)
 				if err != nil {
 					break
 				}
+				
 				resolvedURL := baseURL.ResolveReference(hrefURL)
 				parsedURLs = append(parsedURLs, resolvedURL.String())
 				break
