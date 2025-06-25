@@ -1,0 +1,39 @@
+name: CI
+
+on: 
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    name: Test Crawler Service
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.1"
+          cache-dependency-path: services/crawler/go.sum
+      
+      - name: Make sure crawler compiles
+        working-directory: ./services/crawler
+        run: go build -v ./main/main.go
+
+      - name: Make sure tests succeed
+        working-directory: ./services/crawler
+        run: go test ./... -cover
+
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run gosec
+        working-directory: ./services/crawler
+        run: gosec ./...
+
+      - name: Test if code is idiomatically formatted in crawler service
+        working-directory: ./services/crawler 
+        run: test -z "$(go fmt ./...)"
