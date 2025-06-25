@@ -1,4 +1,4 @@
-package webpages
+package pages
 
 type image struct {
 	NormalizedPageURL   string
