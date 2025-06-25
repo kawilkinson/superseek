@@ -3,61 +3,108 @@ package spider
 import (
 	"fmt"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"golang.org/x/net/html"
 )
 
-// Initialize a regex to make sure characters are in ASCII
-var nonASCIIRegex = regexp.MustCompile(`[^\x20-\x7E]`)
-
-func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
+func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, map[string]map[string]string, error) {
 	htmlReader := strings.NewReader(htmlBody)
 	htmlRootNode, err := html.Parse(htmlReader)
 	if err != nil {
-		return nil, fmt.Errorf("error when parsing HTML given: %v", err)
+		return nil, nil, fmt.Errorf("error when parsing HTML given: %v", err)
 	}
 
-	parsedURLs := []string{}
-	parsedURLs = recurseHTMLTree(htmlRootNode, parsedURLs, rawBaseURL)
+	URLsSet := make(map[string]struct{})
+	images := make(map[string]map[string]string)
 
-	return parsedURLs, nil
+	baseURL, err := url.Parse(rawBaseURL)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error when parsing base URL: %v", err)
+	}
+
+	recurseHTMLTree(htmlRootNode, URLsSet, images, baseURL)
+
+	parsedURLs := setToSlice(URLsSet)
+
+	return parsedURLs, images, nil
 }
 
-func recurseHTMLTree(node *html.Node, parsedURLs []string, rawBaseURL string) []string {
+func recurseHTMLTree(node *html.Node, URLSet map[string]struct{}, images map[string]map[string]string, baseURL *url.URL) {
 	if node == nil {
-		return parsedURLs
+		return
 	}
 
 	if node.Type == html.ElementNode && node.Data == "a" {
-		for _, anchor := range node.Attr {
-			if anchor.Key == "href" {
-				rawHref := anchor.Val
+		for _, attr := range node.Attr {
+			if attr.Key == "href" {
+				rawHref := attr.Val
 
 				// Skip any malformed URLs and any non-ASCII URLs
-				if strings.ContainsAny(rawHref, " <>\"") || nonASCIIRegex.MatchString(rawHref) {
-					continue
+				if strings.ContainsAny(rawHref, " <>\"") || !isASCII(rawHref) {
+					break
 				}
 
 				hrefURL, err := url.Parse(rawHref)
 				if err != nil {
 					break
 				}
-				baseURL, err := url.Parse(rawBaseURL)
+
+				resolvedURL := baseURL.ResolveReference(hrefURL)
+				URLSet[resolvedURL.String()] = struct{}{}
+				break
+			}
+		}
+	} else if node.Type == html.ElementNode && node.Data == "img" {
+		imgInfo := map[string]string{}
+		for _, attr := range node.Attr {
+			if attr.Key == "src" {
+				rawSrc := attr.Val
+
+				// Skip any malformed URLs and any non-ASCII URLs
+				if strings.ContainsAny(rawSrc, " <>\"") || !isASCII(rawSrc) {
+					break
+				}
+
+				srcURL, err := url.Parse(rawSrc)
 				if err != nil {
 					break
 				}
 
-				resolvedURL := baseURL.ResolveReference(hrefURL)
-				parsedURLs = append(parsedURLs, resolvedURL.String())
-				break
+				resolvedURL := baseURL.ResolveReference(srcURL)
+				imgInfo["src"] = resolvedURL.String()
+
+			} else if attr.Key == "alt" {
+				imgInfo["alt"] = attr.Val
 			}
+		}
+
+		if src, exists := imgInfo["src"]; exists {
+			images[src] = imgInfo
 		}
 	}
 
-	parsedURLs = recurseHTMLTree(node.FirstChild, parsedURLs, rawBaseURL)
-	parsedURLs = recurseHTMLTree(node.NextSibling, parsedURLs, rawBaseURL)
+	recurseHTMLTree(node.FirstChild, URLSet, images, baseURL)
+	recurseHTMLTree(node.NextSibling, URLSet, images, baseURL)
+}
 
-	return parsedURLs
+// Helper function for creating a slice
+func setToSlice(set map[string]struct{}) []string {
+	slice := make([]string, 0, len(set))
+	for item := range set {
+		slice = append(slice, item)
+	}
+
+	return slice
+}
+
+// Helper function for ensuring a URL is all in ASCII
+func isASCII(str string) bool {
+	for _, char := range str {
+		if char < 0x20 || char > 0x7E {
+			return false
+		}
+	}
+
+	return true
 }

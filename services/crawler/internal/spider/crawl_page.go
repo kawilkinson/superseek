@@ -37,7 +37,7 @@ func (cfg *Config) CrawlPage(rawCurrentURL string) {
 		return
 	}
 
-	parsedURLs, err := getURLsFromHTML(currentHTML, rawCurrentURL)
+	parsedURLs, _, err := getURLsFromHTML(currentHTML, rawCurrentURL)
 	if err != nil {
 		fmt.Printf("error trying to parse URLs from HTML of %s\n%v\n", rawCurrentURL, err)
 		return
