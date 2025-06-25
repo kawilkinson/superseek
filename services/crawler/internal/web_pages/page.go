@@ -10,3 +10,13 @@ type Page struct {
 	LastCrawled time.Time
 }
 
+func CreatePage(normalizedURL, html, contentType string, statusCode int) *Page {
+	return &Page {
+		NormalizedURL: normalizedURL,
+		HTML: html,
+		ContentType: contentType,
+		StatusCode: statusCode,
+		LastCrawled: time.Now(),
+	}
+}
+
