@@ -9,7 +9,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-// Initialize a compiled regex to make sure characters are in ASCII
+// Initialize a regex to make sure characters are in ASCII
 var nonASCIIRegex = regexp.MustCompile(`[^\x20-\x7E]`)
 
 func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
@@ -48,7 +48,7 @@ func recurseHTMLTree(node *html.Node, parsedURLs []string, rawBaseURL string) []
 				if err != nil {
 					break
 				}
-				
+
 				resolvedURL := baseURL.ResolveReference(hrefURL)
 				parsedURLs = append(parsedURLs, resolvedURL.String())
 				break
