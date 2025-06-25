@@ -1,4 +1,4 @@
-package webpages
+package pages
 
 import "time"
 

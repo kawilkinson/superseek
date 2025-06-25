@@ -1,4 +1,4 @@
-package webpages
+package pages
 
 type PageNode struct {
 	NormalizedURL      string
