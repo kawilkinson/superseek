@@ -1,13 +1,13 @@
 package webpages
 
 type PageNode struct {
-	NormalizedURL string
+	NormalizedURL      string
 	NormalizedLinkURLs map[string]struct{}
 }
 
 func CreatePageNode(normalizedURL string) *PageNode {
-	return &PageNode {
-		NormalizedURL: normalizedURL,
+	return &PageNode{
+		NormalizedURL:      normalizedURL,
 		NormalizedLinkURLs: make(map[string]struct{}),
 	}
 }
@@ -28,5 +28,3 @@ func (pn *PageNode) GetLinks() []string {
 
 	return links
 }
-
-
