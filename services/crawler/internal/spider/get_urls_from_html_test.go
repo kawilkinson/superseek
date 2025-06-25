@@ -2,6 +2,7 @@ package spider
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -15,25 +16,25 @@ func TestGetURLsFromHTML(t *testing.T) {
 		// test 0
 		{
 			name:     "absolute and relative URLs",
-			inputURL: "https://blog.boot.dev",
+			inputURL: "https://test.domain.com",
 			inputBody: `
 		<html>
 			<body>
 				<a href="/path/one">
-					<span>Boot.dev</span>
+					<span>Test.domain.com</span>
 				</a>
 				<a href="https://other.com/path/one">
-					<span>Boot.dev</span>
+					<span>Test.domain.com</span>
 				</a>
 			</body>
 		</html>
 		`,
-			expected: []string{"https://blog.boot.dev/path/one", "https://other.com/path/one"},
+			expected: []string{"https://test.domain.com/path/one", "https://other.com/path/one"},
 		},
 		//test 1
 		{
 			name:     "no anchor tags",
-			inputURL: "https://blog.boot.dev",
+			inputURL: "https://test.domain.com",
 			inputBody: `
 				<html>
 					<body>
@@ -48,7 +49,7 @@ func TestGetURLsFromHTML(t *testing.T) {
 		// test 2
 		{
 			name:     "empty href",
-			inputURL: "https://blog.boot.dev",
+			inputURL: "https://test.domain.com",
 			inputBody: `
 				<html>
 					<body>
@@ -58,12 +59,12 @@ func TestGetURLsFromHTML(t *testing.T) {
 					</body>
 				</html>
 			`,
-			expected: []string{"https://blog.boot.dev"},
+			expected: []string{"https://test.domain.com"},
 		},
 		// test 3
 		{
 			name:     "malformed href",
-			inputURL: "https://blog.boot.dev",
+			inputURL: "https://test.domain.com",
 			inputBody: `
 				<html>
 					<body>
@@ -78,22 +79,22 @@ func TestGetURLsFromHTML(t *testing.T) {
 		// test 4
 		{
 			name:     "protocol-relative href",
-			inputURL: "https://blog.boot.dev",
+			inputURL: "https://test.domain.com",
 			inputBody: `
 				<html>
 					<body>
-						<a href="//cdn.boot.dev/script.js">
+						<a href="//cdn.test.domain.com/script.js">
 							CDN
 						</a>
 					</body>
 				</html>
 			`,
-			expected: []string{"https://cdn.boot.dev/script.js"},
+			expected: []string{"https://cdn.test.domain.com/script.js"},
 		},
 		// test 5
 		{
 			name:     "relative path traversal",
-			inputURL: "https://blog.boot.dev/tutorials",
+			inputURL: "https://test.domain.com/tutorials",
 			inputBody: `
 				<html>
 					<body>
@@ -103,17 +104,56 @@ func TestGetURLsFromHTML(t *testing.T) {
 					</body>
 				</html>
 			`,
-			expected: []string{"https://blog.boot.dev/about"},
+			expected: []string{"https://test.domain.com/about"},
+		},
+		// test 6
+		{
+			name:     "remove duplicate links",
+			inputURL: "https://test.domain.com",
+			inputBody: `
+			<html>
+                <body>
+                    <a href="/valid-link"><span>Valid</span></a>
+                    <a href="<invalid></a>"><span>Broken</span></a>
+                    <a href="https://valid.com/path"></a>
+                    <a href="/valid-link"><span>Valid</span></a>
+                    <a href="<invalid></a>"><span>Broken</span></a>
+                    <a href="https://valid.com/path"></a>
+                </body>
+            </html>
+			`,
+			expected: []string{"https://test.domain.com/valid-link", "https://valid.com/path"},
+		},
+		// test 7
+		{
+			name:     "ignore non-ASCII links",
+			inputURL: "https://test.domain.com",
+			inputBody: `
+			<html>
+                <body>
+                    <a href="/valid-link"><span>Valid</span></a>
+                    <a href="https://valid.com/path"></a>
+                    <a href="https://пример.рф">Cyrillic</a>
+                    <a href="https://例子.com">Chinese</a>
+                    <a href="https://テスト.jp">Japanese</a>
+                    <a href="/another-valid"></a>
+                </body>
+            </html>
+			`,
+			expected: []string{"https://test.domain.com/valid-link", "https://valid.com/path", "https://test.domain.com/another-valid"},
 		},
 	}
 
 	for i, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			actual, err := getURLsFromHTML(testCase.inputBody, testCase.inputURL)
+			actual, _, err := getURLsFromHTML(testCase.inputBody, testCase.inputURL)
 			if err != nil {
 				t.Errorf("Test %v - '%s' FAIL: unexpected error: %v", i, testCase.name, err)
 				return
 			}
+
+			sort.Strings(testCase.expected)
+			sort.Strings(actual)
 
 			if !reflect.DeepEqual(testCase.expected, actual) {
 				t.Errorf("Test %v - '%s' FAIL: expected parsed URLs: %v, actual: %v", i, testCase.name, testCase.expected, actual)
