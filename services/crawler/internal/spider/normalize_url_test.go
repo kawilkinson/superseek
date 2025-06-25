@@ -7,38 +7,56 @@ func TestNormalizeURL(t *testing.T) {
 		name     string
 		inputURL string
 		expected string
+		err      bool
 	}{
 		{
 			name:     "remove scheme",
-			inputURL: "https://blog.boot.dev/path",
-			expected: "blog.boot.dev/path",
+			inputURL: "https://test.domain.com/path",
+			expected: "test.domain.com/path",
+			err:      false,
 		},
 		{
-			name:     "remove end forward slash",
-			inputURL: "blog.boot.dev/path/",
-			expected: "blog.boot.dev/path",
+			name:     "remove trailing forward slash",
+			inputURL: "https://test.domain.com/path/",
+			expected: "test.domain.com/path",
+			err:      false,
 		},
 		{
 			name:     "remove both scheme and end forward slash",
-			inputURL: "http://blog.boot.dev/path/",
-			expected: "blog.boot.dev/path",
+			inputURL: "https://test.domain.com/path/",
+			expected: "test.domain.com/path",
+			err:      false,
 		},
 		{
 			name:     "remove uppercase characters",
-			inputURL: "Blog.BOOT.dev/path",
-			expected: "blog.boot.dev/path",
+			inputURL: "https://Test.DOMAIN.com/path",
+			expected: "test.domain.com/path",
+			err:      false,
 		},
 		{
 			name:     "remove queries",
-			inputURL: "blog.boot.dev/path?param1=value1&param2=value2",
-			expected: "blog.boot.dev/path",
+			inputURL: "https://test.domain.com/path?param1=value1&param2=value2",
+			expected: "test.domain.com/path",
+			err:      false,
+		},
+		{
+			name:     "remove www.",
+			inputURL: "https://www.test.domain.com/path",
+			expected: "test.domain.com/path",
+			err:      false,
+		},
+		{
+			name:     "invalid scheme",
+			inputURL: "htp://test.domain.com/path",
+			expected: "",
+			err:      true,
 		},
 	}
 
 	for i, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
 			actual, err := normalizeURL(testCase.inputURL)
-			if err != nil {
+			if err != nil && !testCase.err {
 				t.Errorf("Test %v - '%s' FAIL: unexpected error: %v", i, testCase.name, err)
 				return
 			}
