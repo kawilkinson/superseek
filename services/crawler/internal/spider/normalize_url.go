@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func normalizeURL(inputURL string) (string, error) {
+func NormalizeURL(inputURL string) (string, error) {
 	parsedURL, err := url.Parse(inputURL)
 	if err != nil {
 		return "", fmt.Errorf("error when parsing URL given: %v", err)
