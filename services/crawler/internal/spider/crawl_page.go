@@ -18,7 +18,7 @@ func (cfg *Config) CrawlPage(rawCurrentURL string) {
 		return
 	}
 
-	normalizedURL, err := normalizeURL(rawCurrentURL)
+	normalizedURL, err := NormalizeURL(rawCurrentURL)
 	if err != nil {
 		fmt.Printf("error trying to normalize the current URL: %s\n%v\n", rawCurrentURL, err)
 		return
