@@ -1,6 +1,6 @@
 package pages
 
-type image struct {
+type Image struct {
 	NormalizedPageURL   string
 	NormalizedSourceURL string
 	Alt                 string
