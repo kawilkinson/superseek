@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
+	"github.com/kawilkinson/search-engine/internal/pages"
 	"github.com/kawilkinson/search-engine/internal/redis_db"
 )
 
-func (cfg *Config) CrawlPage(rawCurrentURL string, db *redis_db.RedisDatabase) {
+func (cfg *Config) CrawlPage(db *redis_db.RedisDatabase) {
 	cfg.concurrencyControl <- struct{}{}
 	defer func() {
 		<-cfg.concurrencyControl
@@ -51,22 +53,58 @@ func (cfg *Config) CrawlPage(rawCurrentURL string, db *redis_db.RedisDatabase) {
 	// 	return
 	// }
 
-	fmt.Printf("getting HTML of %s...\n", rawCurrentURL)
-	currentHTML, err := getHTML(rawCurrentURL)
+	fmt.Printf("Getting HTML of %s...\n", rawCurrentURL)
+	currentHTML, statusCode, contentType, err := getHTML(rawCurrentURL)
 	if err != nil {
-		fmt.Printf("error trying to get HTML of current URL: %s\n%v\n", rawCurrentURL, err)
+		fmt.Printf("error trying to get HTML of URL: %s\n%v\n", rawCurrentURL, err)
 		return
 	}
 
-	parsedURLs, _, err := getURLsFromHTML(currentHTML, rawCurrentURL)
+	parsedURLs, images, err := getURLsFromHTML(currentHTML, rawCurrentURL)
 	if err != nil {
 		fmt.Printf("error trying to parse URLs from HTML of %s\n%v\n", rawCurrentURL, err)
 		return
 	}
 
+	cfg.AddImages(normalizedURL, images)
+	cfg.UpdateLinks(normalizedURL, parsedURLs)
+
+	page := pages.CreatePage(normalizedURL, currentHTML, contentType, statusCode)
+
+	err = cfg.addPage(page)
+	if err != nil {
+		fmt.Printf("\terror adding page: %v\n", err)
+		return
+	}
+
+	err = db.VisitPage(normalizedURL)
+	if err != nil {
+		fmt.Printf("\terror visiting page: %v\n", err)
+	}
+
+	log.Printf("Adding links from %v (%v)...\n", normalizedURL, rawCurrentURL)
 	for _, URL := range parsedURLs {
+		if !crawler_utilities.IsValidURL(URL) {
+			continue
+		}
+
+		score, exists := db.ExistsInQueue(URL)
+		if exists {
+			score -= 0.001
+		} else {
+			score = depth + 1
+		}
+
+		// calculate the score here based on minimum values
+
+		err = db.PushURLToQueue(URL, score)
+		if err != nil {
+			fmt.Printf("error trying to push URL to queue to update score")
+			continue
+		}
+
 		cfg.Wg.Add(1)
 		fmt.Printf("crawling to next URL: %s...\n", URL)
-		go cfg.CrawlPage(URL, db)
+		go cfg.CrawlPage(db)
 	}
 }

@@ -25,3 +25,14 @@ func (db *RedisDatabase) HasURLBeenVisited(normalizedURL string) (bool, error) {
 
 	return true, nil
 }
+
+func (db *RedisDatabase) VisitPage(normalizedURL string) error {
+	urlToSearch := crawler_utilities.NormalizedURLPrefix + ":" + normalizedURL
+
+	_, err := db.Client.HSet(db.Context, urlToSearch, "visited", 1).Result()
+	if err != nil {
+		return fmt.Errorf("unable to update visit %v from Redis: %v", urlToSearch, err)
+	}
+
+	return nil
+}
