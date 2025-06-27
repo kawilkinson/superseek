@@ -83,3 +83,66 @@ func (db *RedisDatabase) PushURLToQueue(rawURL string, score float64) error {
 
 	return nil
 }
+
+func (db *RedisDatabase) ExistsInQueue(rawURL string) (float64, bool) {
+	normalizedURL, err := spider.NormalizeURL(rawURL)
+	if err != nil {
+		return 0.0, false
+	}
+
+	result, err := db.Client.ZScore(db.Context, spider.CrawlerQueueKey, normalizedURL).Result()
+	if err != nil {
+		return 0.0, false
+	}
+
+	return result, true
+}
+
+func (db *RedisDatabase) HasURLBeenVisited(normalizedURL string) (bool, error) {
+	urlToSearch := spider.NormalizedURLPrefix + ":" + normalizedURL
+	result, err := db.Client.HGet(db.Context, urlToSearch, "visited").Result()
+	if err != nil {
+		return false, fmt.Errorf("unable to get %v from Redis Database: %v", urlToSearch, err)
+	}
+
+	visited, err := strconv.Atoi(result)
+	if err != nil {
+		return false, fmt.Errorf("unable to parse the 'visited' value: %v", err)
+	}
+
+	if visited == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (db *RedisDatabase) PopURL() (string, float64, string, error) {
+	result, err := db.Client.BZPopMin(db.Context, spider.Timeout, spider.CrawlerQueueKey).Result()
+	if err != nil {
+		return "", 0.0, "", fmt.Errorf("unable to pop URL from the crawler queue: %v", err)
+	}
+
+	normalizedURL := result.Z.Member.(string)
+	rawURL := fmt.Sprintf("https://%v", normalizedURL)
+
+	return rawURL, result.Z.Score, normalizedURL, nil
+}
+
+func (db *RedisDatabase) PopSignalQueue() (string, error) {
+	result, err := db.Client.BRPop(db.Context, 0, spider.SignalQueueKey).Result()
+	if err != nil {
+		return "", fmt.Errorf("unable to pop from the signal queue: %v", err)
+	}
+
+	return result[1], nil
+}
+
+func (db *RedisDatabase) GetIndexerQueueSize() (int64, error) {
+	size, err := db.Client.LLen(db.Context, spider.IndexerQueueKey).Result()
+	if err != nil {
+		return -1, fmt.Errorf("unable to get %v's size: %v", spider.IndexerQueueKey, err)
+	}
+
+	return size, nil
+}
