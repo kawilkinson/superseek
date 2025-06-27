@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/kawilkinson/search-engine/internal/spider"
+	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
 )
 
 func (db *RedisDatabase) PushURLToQueue(rawURL string, score float64) error {
-	strippedURL, err := spider.StripURL(rawURL)
+	strippedURL, err := crawler_utilities.StripURL(rawURL)
 	if err != nil {
 		return fmt.Errorf("unable to strip URL: %v", err)
 	}
 
-	normalizedURL, err := spider.NormalizeURL(strippedURL)
+	normalizedURL, err := crawler_utilities.NormalizeURL(strippedURL)
 	if err != nil {
 		return fmt.Errorf("unable to normalize URL: %v", err)
 	}

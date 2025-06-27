@@ -3,11 +3,11 @@ package redis_db
 import (
 	"fmt"
 
-	"github.com/kawilkinson/search-engine/internal/spider"
+	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
 )
 
 func (db *RedisDatabase) addURL(rawURL, normalizedURL string) error {
-	urlToSearch := spider.NormalizedURLPrefix + ":" + normalizedURL
+	urlToSearch := crawler_utilities.NormalizedURLPrefix + ":" + normalizedURL
 
 	exists, err := db.Client.Exists(db.Context, urlToSearch).Result()
 	if err != nil {

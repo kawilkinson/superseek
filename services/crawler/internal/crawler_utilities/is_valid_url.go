@@ -1,4 +1,4 @@
-package spider
+package crawler_utilities
 
 import (
 	"strings"
