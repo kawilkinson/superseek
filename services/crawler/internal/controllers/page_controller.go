@@ -14,6 +14,12 @@ type PageController struct {
 	db *redisdb.RedisDatabase
 }
 
+func CreatePageController(db *redisdb.RedisDatabase) *PageController {
+	return &PageController{
+		db: db,
+	}
+}
+
 func (pgCtrl *PageController) GetAllPages() map[string]*pages.Page {
 	log.Println("grabbing pages data from Redis...")
 	redisPages := make(map[string]*pages.Page)
