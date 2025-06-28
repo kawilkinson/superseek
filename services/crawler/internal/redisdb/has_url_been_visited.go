@@ -1,14 +1,14 @@
-package redis_db
+package redisdb
 
 import (
 	"fmt"
 	"strconv"
 
-	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
+	"github.com/kawilkinson/search-engine/internal/crawlutil"
 )
 
 func (db *RedisDatabase) HasURLBeenVisited(normalizedURL string) (bool, error) {
-	urlToSearch := crawler_utilities.NormalizedURLPrefix + ":" + normalizedURL
+	urlToSearch := crawlutil.NormalizedURLPrefix + ":" + normalizedURL
 	result, err := db.Client.HGet(db.Context, urlToSearch, "visited").Result()
 	if err != nil {
 		return false, fmt.Errorf("unable to get %v from Redis Database: %v", urlToSearch, err)
@@ -27,7 +27,7 @@ func (db *RedisDatabase) HasURLBeenVisited(normalizedURL string) (bool, error) {
 }
 
 func (db *RedisDatabase) VisitPage(normalizedURL string) error {
-	urlToSearch := crawler_utilities.NormalizedURLPrefix + ":" + normalizedURL
+	urlToSearch := crawlutil.NormalizedURLPrefix + ":" + normalizedURL
 
 	_, err := db.Client.HSet(db.Context, urlToSearch, "visited", 1).Result()
 	if err != nil {

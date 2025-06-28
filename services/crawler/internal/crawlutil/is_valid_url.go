@@ -1,4 +1,4 @@
-package crawler_utilities
+package crawlutil
 
 import (
 	"strings"

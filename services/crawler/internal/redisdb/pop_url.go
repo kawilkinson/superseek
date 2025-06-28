@@ -1,13 +1,13 @@
-package redis_db
+package redisdb
 
 import (
 	"fmt"
 
-	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
+	"github.com/kawilkinson/search-engine/internal/crawlutil"
 )
 
 func (db *RedisDatabase) PopURL() (string, float64, string, error) {
-	result, err := db.Client.BZPopMin(db.Context, crawler_utilities.Timeout, crawler_utilities.CrawlerQueueKey).Result()
+	result, err := db.Client.BZPopMin(db.Context, crawlutil.Timeout, crawlutil.CrawlerQueueKey).Result()
 	if err != nil {
 		return "", 0.0, "", fmt.Errorf("unable to pop URL from the crawler queue: %v", err)
 	}
