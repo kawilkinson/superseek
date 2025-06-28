@@ -30,7 +30,10 @@ func main() {
 		log.Printf("unable to connect to redis database: %v\n", err)
 	}
 
-	db.PushURLToQueue(startingURL, 0)
+	err = db.PushURLToQueue(startingURL, 0)
+	if err != nil {
+		log.Fatalf("FATAL error pushing starting URL to the queue: %v\n", err)
+	}
 	log.Printf("starting queue with %v\n", startingURL)
 
 	pageController := controllers.CreatePageController(db)
@@ -39,7 +42,7 @@ func main() {
 
 	cfg, err := spider.Configure(baseURL, *maxConcurrency, *maxPages)
 	if err != nil {
-		log.Fatalf("error configuring crawler: %v", err)
+		log.Fatalf("FATAL error configuring crawler: %v\n", err)
 	}
 
 	// Main loop for the crawler to continuously run through URLs and push to Redis
