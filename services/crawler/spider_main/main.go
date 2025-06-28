@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/kawilkinson/search-engine/internal/controllers"
 	"github.com/kawilkinson/search-engine/internal/crawlutil"
 	"github.com/kawilkinson/search-engine/internal/pages"
 	"github.com/kawilkinson/search-engine/internal/redisdb"
@@ -32,7 +33,9 @@ func main() {
 	db.PushURLToQueue(startingURL, 0)
 	log.Printf("starting queue with %v\n", startingURL)
 
-	// create controllers and initialize them here
+	pageController := controllers.CreatePageController(db)
+	linksController := controllers.CreateLinksController(db)
+	imageController := controllers.CreateImageController(db)
 
 	cfg, err := spider.Configure(baseURL, *maxConcurrency, *maxPages)
 	if err != nil {
@@ -69,7 +72,9 @@ func main() {
 		go cfg.CrawlPage(db)
 		cfg.Wg.Wait()
 
-		// Use controllers to write entries to Redis database
+		pageController.SavePages(cfg)
+		linksController.SaveLinks(cfg)
+		imageController.SaveImages(cfg)
 
 		cfg.Pages = make(map[string]*pages.Page)
 		cfg.Outlinks = make(map[string]*pages.PageNode)

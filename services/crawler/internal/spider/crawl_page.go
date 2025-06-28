@@ -26,7 +26,7 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 	log.Println("Waiting for the message queue...")
 	rawCurrentURL, depth, normalizedURL, err := db.PopURL()
 	if err != nil {
-		fmt.Printf("No more URLs in the message queue: %v\n", err)
+		log.Printf("no more URLs in the message queue: %v\n", err)
 	}
 
 	fmt.Printf("Popped URL: %v | Depth Level: %v | Normalized URL: %v\n", rawCurrentURL, depth, normalizedURL)
@@ -56,13 +56,13 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 	fmt.Printf("Getting HTML of %s...\n", rawCurrentURL)
 	currentHTML, statusCode, contentType, err := getHTML(rawCurrentURL)
 	if err != nil {
-		fmt.Printf("error trying to get HTML of URL: %s\n%v\n", rawCurrentURL, err)
+		log.Printf("error trying to get HTML of URL: %s\n%v\n", rawCurrentURL, err)
 		return
 	}
 
 	parsedURLs, images, err := getURLsFromHTML(currentHTML, rawCurrentURL)
 	if err != nil {
-		fmt.Printf("error trying to parse URLs from HTML of %s\n%v\n", rawCurrentURL, err)
+		log.Printf("error trying to parse URLs from HTML of %s\n%v\n", rawCurrentURL, err)
 		return
 	}
 
@@ -73,16 +73,16 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 
 	err = cfg.addPage(page)
 	if err != nil {
-		fmt.Printf("\terror adding page: %v\n", err)
+		log.Printf("\terror adding page: %v\n", err)
 		return
 	}
 
 	err = db.VisitPage(normalizedURL)
 	if err != nil {
-		fmt.Printf("\terror visiting page: %v\n", err)
+		log.Printf("\terror visiting page: %v\n", err)
 	}
 
-	log.Printf("Adding links from %v (%v)...\n", normalizedURL, rawCurrentURL)
+	log.Printf("adding links from %v (%v)...\n", normalizedURL, rawCurrentURL)
 	for _, URL := range parsedURLs {
 		if !crawlutil.IsValidURL(URL) {
 			continue
@@ -99,12 +99,12 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 
 		err = db.PushURLToQueue(URL, score)
 		if err != nil {
-			fmt.Printf("error trying to push URL to queue to update score")
+			log.Printf("error trying to push URL to queue to update score")
 			continue
 		}
 
 		cfg.Wg.Add(1)
-		fmt.Printf("crawling to next URL: %s...\n", URL)
+		log.Printf("crawling to next URL: %s...\n", URL)
 		go cfg.CrawlPage(db)
 	}
 }
