@@ -1,13 +1,13 @@
-package redis_db
+package redisdb
 
 import (
 	"fmt"
 
-	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
+	"github.com/kawilkinson/search-engine/internal/crawlutil"
 )
 
 func (db *RedisDatabase) addURL(rawURL, normalizedURL string) error {
-	urlToSearch := crawler_utilities.NormalizedURLPrefix + ":" + normalizedURL
+	urlToSearch := crawlutil.NormalizedURLPrefix + ":" + normalizedURL
 
 	exists, err := db.Client.Exists(db.Context, urlToSearch).Result()
 	if err != nil {

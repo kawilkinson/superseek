@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
+	"github.com/kawilkinson/search-engine/internal/crawlutil"
 	"github.com/kawilkinson/search-engine/internal/pages"
-	"github.com/kawilkinson/search-engine/internal/redis_db"
+	"github.com/kawilkinson/search-engine/internal/redisdb"
 	"github.com/kawilkinson/search-engine/internal/spider"
 )
 
@@ -23,7 +23,7 @@ func main() {
 	startingURL := loadEnv("STARTING_URL", "https://en.wikipedia.org/wiki/Japan")
 	baseURL := "https://en.wikipedia.org"
 
-	db := &redis_db.RedisDatabase{}
+	db := &redisdb.RedisDatabase{}
 	err := db.ConnectToRedis(redisHost, redisPort, redisPassword, redisDB)
 	if err != nil {
 		log.Printf("unable to connect to redis database: %v\n", err)
@@ -48,7 +48,7 @@ func main() {
 			return
 		}
 
-		if queueSize >= crawler_utilities.MaxIndexerQueueSize {
+		if queueSize >= crawlutil.MaxIndexerQueueSize {
 			log.Printf("indexer queue is full, waiting...\n")
 			for {
 				signal, err := db.PopSignalQueue()
@@ -57,7 +57,7 @@ func main() {
 					return
 				}
 
-				if signal == crawler_utilities.ResumeCrawl {
+				if signal == crawlutil.ResumeCrawl {
 					log.Println("resuming crawl of web pages")
 					break
 				}

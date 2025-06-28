@@ -1,19 +1,19 @@
-package redis_db
+package redisdb
 
 import (
 	"fmt"
 	"log"
 
-	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
+	"github.com/kawilkinson/search-engine/internal/crawlutil"
 )
 
 func (db *RedisDatabase) PushURLToQueue(rawURL string, score float64) error {
-	strippedURL, err := crawler_utilities.StripURL(rawURL)
+	strippedURL, err := crawlutil.StripURL(rawURL)
 	if err != nil {
 		return fmt.Errorf("unable to strip URL: %v", err)
 	}
 
-	normalizedURL, err := crawler_utilities.NormalizeURL(strippedURL)
+	normalizedURL, err := crawlutil.NormalizeURL(strippedURL)
 	if err != nil {
 		return fmt.Errorf("unable to normalize URL: %v", err)
 	}

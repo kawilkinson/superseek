@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
+	"github.com/kawilkinson/search-engine/internal/crawlutil"
 	"github.com/kawilkinson/search-engine/internal/pages"
-	"github.com/kawilkinson/search-engine/internal/redis_db"
+	"github.com/kawilkinson/search-engine/internal/redisdb"
 )
 
-func (cfg *Config) CrawlPage(db *redis_db.RedisDatabase) {
+func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 	cfg.concurrencyControl <- struct{}{}
 	defer func() {
 		<-cfg.concurrencyControl
@@ -84,7 +84,7 @@ func (cfg *Config) CrawlPage(db *redis_db.RedisDatabase) {
 
 	log.Printf("Adding links from %v (%v)...\n", normalizedURL, rawCurrentURL)
 	for _, URL := range parsedURLs {
-		if !crawler_utilities.IsValidURL(URL) {
+		if !crawlutil.IsValidURL(URL) {
 			continue
 		}
 

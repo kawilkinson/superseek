@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/kawilkinson/search-engine/internal/crawler_utilities"
+	"github.com/kawilkinson/search-engine/internal/crawlutil"
 	"github.com/kawilkinson/search-engine/internal/pages"
 )
 
@@ -86,8 +86,8 @@ func (cfg *Config) UpdateLinks(normalizedURL string, outgoingLinks []string) {
 
 	cfg.Outlinks[normalizedURL] = pages.CreatePageNode(normalizedURL)
 	for _, link := range outgoingLinks {
-		if crawler_utilities.IsValidURL(link) {
-			normalizedOutgoingURL, err := crawler_utilities.NormalizeURL(link)
+		if crawlutil.IsValidURL(link) {
+			normalizedOutgoingURL, err := crawlutil.NormalizeURL(link)
 			if err != nil {
 				continue
 			}
