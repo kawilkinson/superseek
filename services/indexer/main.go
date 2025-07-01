@@ -10,7 +10,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-
 type RedisDatabase struct {
 	Client  *redis.Client
 	Context context.Context
@@ -22,8 +21,6 @@ func main() {
 	redisPort := loadEnv("REDIS_PORT", "6379")
 	redisPassword := loadEnv("REDIS_PASSWORD", "")
 	redisDB := loadEnv("REDIS_DB", "0")
-
-	
 
 }
 
