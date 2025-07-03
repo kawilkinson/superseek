@@ -22,6 +22,6 @@ func (db *RedisDatabase) SignalCrawler() {
 }
 
 func (db *RedisDatabase) PushToImageIndexerQueue(normalizedURL string) {
-	db.Client.LPush(db.Context, indexerutil.IndexerQueueKey, normalizedURL)
+	db.Client.LPush(db.Context, indexerutil.ImageIndexerQueueKey, normalizedURL)
 	log.Printf("pushed %s to image indexer queue", normalizedURL)
 }
