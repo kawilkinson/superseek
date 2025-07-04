@@ -1,14 +1,15 @@
 package redisdb
 
 import (
+	"context"
 	"log"
 
 	"github.com/kawilkinson/services/indexer/internal/indexerutil"
-	"github.com/kawilkinson/services/indexer/internal/pages"
+	"github.com/kawilkinson/services/indexer/internal/models"
 )
 
-func (db *RedisDatabase) PopPage() string {
-	poppedPage, err := db.Client.BRPop(db.Context, indexerutil.Timeout, indexerutil.IndexerQueueKey).Result()
+func (db *RedisDatabase) PopPage(ctx context.Context) string {
+	poppedPage, err := db.Client.BRPop(ctx, indexerutil.Timeout, indexerutil.IndexerQueueKey).Result()
 	if err != nil {
 		log.Printf("unable to fetch page from message queue: %v", err)
 		return ""
@@ -24,8 +25,8 @@ func (db *RedisDatabase) PopPage() string {
 	return pageID
 }
 
-func (db *RedisDatabase) PeekPage() string {
-	peekedPage, err := db.Client.LRange(db.Context, indexerutil.IndexerQueueKey, -1, -1).Result()
+func (db *RedisDatabase) PeekPage(ctx context.Context) string {
+	peekedPage, err := db.Client.LRange(ctx, indexerutil.IndexerQueueKey, -1, -1).Result()
 	if err != nil {
 		log.Printf("unable to peek page from message queue: %v", err)
 		return ""
@@ -42,8 +43,8 @@ func (db *RedisDatabase) PeekPage() string {
 	return pageID
 }
 
-func (db *RedisDatabase) GetPageData(key string) *pages.Page {
-	pageHashed, err := db.Client.HGetAll(db.Context, key).Result()
+func (db *RedisDatabase) GetPageData(ctx context.Context, key string) *models.Page {
+	pageHashed, err := db.Client.HGetAll(ctx, key).Result()
 	if err != nil {
 		log.Printf("unable to get page data from %s: %v", key, err)
 		return nil
@@ -56,13 +57,13 @@ func (db *RedisDatabase) GetPageData(key string) *pages.Page {
 
 	log.Printf("page with key %s successfully fetched", key)
 
-	page := pages.FromHash(pageHashed)
+	page := models.FromHash(pageHashed)
 
 	return page
 }
 
-func (db *RedisDatabase) DeletePageData(key string) {
-	result, err := db.Client.Del(db.Context, key).Result()
+func (db *RedisDatabase) DeletePageData(ctx context.Context, key string) {
+	result, err := db.Client.Del(ctx, key).Result()
 	if err != nil {
 		log.Printf("unable to delete key %s from Redis: %v", key, err)
 		return
