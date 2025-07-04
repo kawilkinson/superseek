@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"log"
 
 	"github.com/kawilkinson/search-engine/internal/crawlutil"
@@ -18,7 +19,7 @@ func CreateLinksController(db *redisdb.RedisDatabase) *LinksController {
 	}
 }
 
-func (linksCtrl *LinksController) SaveLinks(cfg *spider.Config) {
+func (linksCtrl *LinksController) SaveLinks(ctx context.Context, cfg *spider.Config) {
 	pipeline := linksCtrl.db.Client.Pipeline()
 
 	log.Println("saving backlinks...")
@@ -26,7 +27,7 @@ func (linksCtrl *LinksController) SaveLinks(cfg *spider.Config) {
 	count := len(data)
 	for key, backlinks := range data {
 		for _, link := range backlinks.GetLinks() {
-			pipeline.SAdd(linksCtrl.db.Context, crawlutil.BacklinksPrefix+":"+key, link)
+			pipeline.SAdd(ctx, crawlutil.BacklinksPrefix+":"+key, link)
 		}
 	}
 
@@ -35,11 +36,11 @@ func (linksCtrl *LinksController) SaveLinks(cfg *spider.Config) {
 	count += len(data)
 	for key, outlinks := range data {
 		for _, link := range outlinks.GetLinks() {
-			pipeline.SAdd(linksCtrl.db.Context, crawlutil.OutlinksPrefix+":"+key, link)
+			pipeline.SAdd(ctx, crawlutil.OutlinksPrefix+":"+key, link)
 		}
 	}
 
-	_, err := pipeline.Exec(linksCtrl.db.Context)
+	_, err := pipeline.Exec(ctx)
 	if err != nil {
 		log.Printf("unable to save links to Redis: %v\n", err)
 	} else {

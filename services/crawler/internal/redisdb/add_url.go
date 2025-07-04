@@ -1,15 +1,16 @@
 package redisdb
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/kawilkinson/search-engine/internal/crawlutil"
 )
 
-func (db *RedisDatabase) addURL(rawURL, normalizedURL string) error {
+func (db *RedisDatabase) addURL(ctx context.Context, rawURL, normalizedURL string) error {
 	urlToSearch := crawlutil.NormalizedURLPrefix + ":" + normalizedURL
 
-	exists, err := db.Client.Exists(db.Context, urlToSearch).Result()
+	exists, err := db.Client.Exists(ctx, urlToSearch).Result()
 	if err != nil {
 		return fmt.Errorf("URL key not found in Redis database: %v", err)
 	}
@@ -18,7 +19,7 @@ func (db *RedisDatabase) addURL(rawURL, normalizedURL string) error {
 		return fmt.Errorf("URL key already exists in Redis database")
 	}
 
-	err = db.Client.HSet(db.Context, urlToSearch, map[string]interface{}{
+	err = db.Client.HSet(ctx, urlToSearch, map[string]interface{}{
 		"raw_url": rawURL,
 		"visited": 0,
 	}).Err()

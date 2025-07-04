@@ -1,6 +1,7 @@
 package spider
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/kawilkinson/search-engine/internal/redisdb"
 )
 
-func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
+func (cfg *Config) CrawlPage(ctx context.Context, db *redisdb.RedisDatabase) {
 	cfg.concurrencyControl <- struct{}{}
 	defer func() {
 		<-cfg.concurrencyControl
@@ -24,7 +25,7 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 	}
 
 	log.Println("Waiting for the message queue...")
-	rawCurrentURL, depth, normalizedURL, err := db.PopURL()
+	rawCurrentURL, depth, normalizedURL, err := db.PopURL(ctx)
 	if err != nil {
 		log.Printf("no more URLs in the message queue: %v\n", err)
 	}
@@ -37,7 +38,7 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 	// 	return
 	// }
 
-	visited, err := db.HasURLBeenVisited(normalizedURL)
+	visited, err := db.HasURLBeenVisited(ctx, normalizedURL)
 	if err != nil {
 		log.Printf("Error: %v - skipping this URL...\n", err)
 		return
@@ -77,7 +78,7 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 		return
 	}
 
-	err = db.VisitPage(normalizedURL)
+	err = db.VisitPage(ctx, normalizedURL)
 	if err != nil {
 		log.Printf("\terror visiting page: %v\n", err)
 	}
@@ -88,7 +89,7 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 			continue
 		}
 
-		score, exists := db.ExistsInQueue(URL)
+		score, exists := db.ExistsInQueue(ctx, URL)
 		if exists {
 			score -= 0.001
 		} else {
@@ -97,7 +98,7 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 
 		// calculate the score here based on minimum values
 
-		err = db.PushURLToQueue(URL, score)
+		err = db.PushURLToQueue(ctx, URL, score)
 		if err != nil {
 			log.Printf("error trying to push URL to queue to update score")
 			continue
@@ -105,6 +106,6 @@ func (cfg *Config) CrawlPage(db *redisdb.RedisDatabase) {
 
 		cfg.Wg.Add(1)
 		log.Printf("crawling to next URL: %s...\n", URL)
-		go cfg.CrawlPage(db)
+		go cfg.CrawlPage(ctx, db)
 	}
 }

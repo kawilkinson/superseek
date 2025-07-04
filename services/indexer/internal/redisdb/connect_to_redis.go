@@ -10,7 +10,7 @@ import (
 )
 
 type RedisDatabase struct {
-	Client  *redis.Client
+	Client *redis.Client
 }
 
 func (db *RedisDatabase) ConnectToRedis(ctx context.Context, redisHost, redisPort, redisPassword, redisDB string) error {

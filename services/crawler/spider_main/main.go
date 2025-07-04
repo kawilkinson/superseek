@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -23,14 +24,15 @@ func main() {
 	redisDB := loadEnv("REDIS_DB", "0")
 	startingURL := loadEnv("STARTING_URL", "https://en.wikipedia.org/wiki/Japan")
 	baseURL := "https://en.wikipedia.org"
+	ctx := context.Background()
 
 	db := &redisdb.RedisDatabase{}
-	err := db.ConnectToRedis(redisHost, redisPort, redisPassword, redisDB)
+	err := db.ConnectToRedis(ctx, redisHost, redisPort, redisPassword, redisDB)
 	if err != nil {
 		log.Printf("unable to connect to redis database: %v\n", err)
 	}
 
-	err = db.PushURLToQueue(startingURL, 0)
+	err = db.PushURLToQueue(ctx, startingURL, 0)
 	if err != nil {
 		log.Fatalf("FATAL error pushing starting URL to the queue: %v\n", err)
 	}
@@ -48,7 +50,7 @@ func main() {
 	// Main loop for the crawler to continuously run through URLs and push to Redis
 	for {
 		log.Printf("Checking number of entries in queue...")
-		queueSize, err := db.GetIndexerQueueSize()
+		queueSize, err := db.GetIndexerQueueSize(ctx)
 		if err != nil {
 			log.Printf("unable to get indexer queue size: %v\n", err)
 			return
@@ -57,7 +59,7 @@ func main() {
 		if queueSize >= crawlutil.MaxIndexerQueueSize {
 			log.Printf("indexer queue is full, waiting...\n")
 			for {
-				signal, err := db.PopSignalQueue()
+				signal, err := db.PopSignalQueue(ctx)
 				if err != nil {
 					log.Printf("unable to get signal from queue: %v\n", err)
 					return
@@ -72,12 +74,12 @@ func main() {
 
 		log.Println("creating workers...")
 		cfg.Wg.Add(1)
-		go cfg.CrawlPage(db)
+		go cfg.CrawlPage(ctx, db)
 		cfg.Wg.Wait()
 
-		pageController.SavePages(cfg)
-		linksController.SaveLinks(cfg)
-		imageController.SaveImages(cfg)
+		pageController.SavePages(ctx, cfg)
+		linksController.SaveLinks(ctx, cfg)
+		imageController.SaveImages(ctx, cfg)
 
 		cfg.Pages = make(map[string]*pages.Page)
 		cfg.Outlinks = make(map[string]*pages.PageNode)

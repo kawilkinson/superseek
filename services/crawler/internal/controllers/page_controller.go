@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"log"
 
 	"github.com/kawilkinson/search-engine/internal/crawlutil"
@@ -20,11 +21,11 @@ func CreatePageController(db *redisdb.RedisDatabase) *PageController {
 	}
 }
 
-func (pgCtrl *PageController) GetAllPages() map[string]*pages.Page {
+func (pgCtrl *PageController) GetAllPages(ctx context.Context) map[string]*pages.Page {
 	log.Println("grabbing pages data from Redis...")
 	redisPages := make(map[string]*pages.Page)
 
-	keys, err := pgCtrl.db.Client.Keys(pgCtrl.db.Context, crawlutil.PagePrefix+":*").Result()
+	keys, err := pgCtrl.db.Client.Keys(ctx, crawlutil.PagePrefix+":*").Result()
 	if err != nil {
 		log.Printf("unable to fetch page data from Redis: %v\n", err)
 		return nil
@@ -34,10 +35,10 @@ func (pgCtrl *PageController) GetAllPages() map[string]*pages.Page {
 	commands := make([]*redis.MapStringStringCmd, len(keys))
 
 	for i, key := range keys {
-		commands[i] = pipeline.HGetAll(pgCtrl.db.Context, key)
+		commands[i] = pipeline.HGetAll(ctx, key)
 	}
 
-	_, err = pipeline.Exec(pgCtrl.db.Context)
+	_, err = pipeline.Exec(ctx)
 	if err != nil {
 		log.Printf("unable to fetch page data from Redis pipeline: %v\n", err)
 		return nil
@@ -62,7 +63,7 @@ func (pgCtrl *PageController) GetAllPages() map[string]*pages.Page {
 	return redisPages
 }
 
-func (pgCtrl *PageController) SavePages(cfg *spider.Config) {
+func (pgCtrl *PageController) SavePages(ctx context.Context, cfg *spider.Config) {
 	data := cfg.Pages
 	log.Printf("writing %d entries to the Redis database...\n", len(data))
 
@@ -76,12 +77,12 @@ func (pgCtrl *PageController) SavePages(cfg *spider.Config) {
 		}
 
 		pageKey := crawlutil.PagePrefix + ":" + page.NormalizedURL
-		pipeline.HSet(pgCtrl.db.Context, pageKey, pageHash)
+		pipeline.HSet(ctx, pageKey, pageHash)
 
-		pgCtrl.db.Client.LPush(pgCtrl.db.Context, crawlutil.IndexerQueueKey, pageKey)
+		pgCtrl.db.Client.LPush(ctx, crawlutil.IndexerQueueKey, pageKey)
 	}
 
-	_, err := pipeline.Exec(pgCtrl.db.Context)
+	_, err := pipeline.Exec(ctx)
 	if err != nil {
 		log.Printf("unable to execute page pipeline: %v\n", err)
 	} else {

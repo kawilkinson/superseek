@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -19,7 +20,7 @@ func CreateImageController(db *redisdb.RedisDatabase) *ImageController {
 	}
 }
 
-func (imgCtrl *ImageController) SaveImages(cfg *spider.Config) {
+func (imgCtrl *ImageController) SaveImages(ctx context.Context, cfg *spider.Config) {
 	pipeline := imgCtrl.db.Client.Pipeline()
 
 	log.Println("saving images...")
@@ -29,21 +30,21 @@ func (imgCtrl *ImageController) SaveImages(cfg *spider.Config) {
 	for normalizedURL, imageData := range data {
 		for _, image := range imageData {
 			imageKey := crawlutil.ImagePrefix + ":" + image.NormalizedSourceURL
-			pipeline.HSet(imgCtrl.db.Context, imageKey, map[string]interface{}{
+			pipeline.HSet(ctx, imageKey, map[string]interface{}{
 				"page_url": image.NormalizedPageURL,
 				"alt":      image.Alt,
 			})
 
-			pipeline.Expire(imgCtrl.db.Context, imageKey, crawlutil.ImgCtrlExpirationTime*time.Hour)
+			pipeline.Expire(ctx, imageKey, crawlutil.ImgCtrlExpirationTime*time.Hour)
 
 			count += 1
 
 			pageImagesKey := crawlutil.PageImagesPrefix + ":" + normalizedURL
-			pipeline.SAdd(imgCtrl.db.Context, pageImagesKey, image.NormalizedSourceURL)
+			pipeline.SAdd(ctx, pageImagesKey, image.NormalizedSourceURL)
 		}
 	}
 
-	_, err := pipeline.Exec(imgCtrl.db.Context)
+	_, err := pipeline.Exec(ctx)
 	if err != nil {
 		log.Printf("unable to save images to Redis: %v\n", err)
 	} else {
