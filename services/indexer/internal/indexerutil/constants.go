@@ -6,6 +6,11 @@ const (
 	Timeout       = 4 * time.Second
 	MaxIndexWords = 1000
 
+	WordsCollection      = "words"
+	MetadataCollection   = "metadata"
+	OutlinksCollection   = "outlinks"
+	DictionaryCollection = "dictionary"
+
 	IndexerQueueKey      = "indexer_queue"
 	ImageIndexerQueueKey = "image_indexer_queue"
 	SignalQueueKey       = "signal_queue"

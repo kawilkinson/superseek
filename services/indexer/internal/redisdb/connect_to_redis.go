@@ -11,10 +11,9 @@ import (
 
 type RedisDatabase struct {
 	Client  *redis.Client
-	Context context.Context
 }
 
-func (db *RedisDatabase) ConnectToRedis(redisHost, redisPort, redisPassword, redisDB string) error {
+func (db *RedisDatabase) ConnectToRedis(ctx context.Context, redisHost, redisPort, redisPassword, redisDB string) error {
 	log.Println("Attempting connection to Redis database...")
 
 	dbIndex, err := strconv.Atoi(redisDB)
@@ -28,9 +27,7 @@ func (db *RedisDatabase) ConnectToRedis(redisHost, redisPort, redisPassword, red
 		DB:       dbIndex,
 	})
 
-	db.Context = context.Background()
-
-	_, err = db.Client.Ping(db.Context).Result()
+	_, err = db.Client.Ping(ctx).Result()
 	if err != nil {
 		return fmt.Errorf("unable to connect to Redis database of host %v: %v", redisHost, err)
 	}

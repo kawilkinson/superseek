@@ -1,4 +1,4 @@
-package pages
+package models
 
 type Outlinks struct {
 	ID    string

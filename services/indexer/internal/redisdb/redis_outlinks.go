@@ -1,15 +1,16 @@
 package redisdb
 
 import (
+	"context"
 	"log"
 
 	"github.com/kawilkinson/services/indexer/internal/indexerutil"
-	"github.com/kawilkinson/services/indexer/internal/pages"
+	"github.com/kawilkinson/services/indexer/internal/models"
 )
 
-func (db *RedisDatabase) GetOutlinks(normalizedURL string) *pages.Outlinks {
+func (db *RedisDatabase) GetOutlinks(ctx context.Context, normalizedURL string) *models.Outlinks {
 	key := indexerutil.OutlinksPrefix + ":" + normalizedURL
-	result, err := db.Client.SMembers(db.Context, key).Result()
+	result, err := db.Client.SMembers(ctx, key).Result()
 	if err != nil {
 		log.Printf("unable to get outlinks from key %s: %v", key, err)
 		return nil
@@ -25,15 +26,15 @@ func (db *RedisDatabase) GetOutlinks(normalizedURL string) *pages.Outlinks {
 		linksSet[link] = struct{}{}
 	}
 
-	return &pages.Outlinks{
+	return &models.Outlinks{
 		ID:    normalizedURL,
 		Links: linksSet,
 	}
 }
 
-func (db *RedisDatabase) DeleteOutlinks(normalizedURL string) {
+func (db *RedisDatabase) DeleteOutlinks(ctx context.Context, normalizedURL string) {
 	key := indexerutil.OutlinksPrefix + ":" + normalizedURL
-	result, err := db.Client.Del(db.Context, key).Result()
+	result, err := db.Client.Del(ctx, key).Result()
 	if err != nil {
 		log.Printf("unable to delete outlinks from key %s: %v", key, err)
 		return
