@@ -9,29 +9,29 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RedisDatabase struct {
+type RedisClient struct {
 	Client *redis.Client
 }
 
-func (db *RedisDatabase) ConnectToRedis(ctx context.Context, redisHost, redisPort, redisPassword, redisDB string) error {
+func ConnectToRedis(ctx context.Context, redisPort, redisDatabase int, redisHost, redisPassword string) (*RedisClient, error) {
 	log.Println("Attempting connection to Redis database...")
 
-	dbIndex, err := strconv.Atoi(redisDB)
-	if err != nil {
-		return fmt.Errorf("unable to parse RedisDB value: %v", err)
-	}
+	redisPortStr := strconv.Itoa(redisPort)
 
-	db.Client = redis.NewClient(&redis.Options{
-		Addr:     redisHost + ":" + redisPort,
+	client := redis.NewClient(&redis.Options{
+		Addr:     redisHost + ":" + redisPortStr,
 		Password: redisPassword,
-		DB:       dbIndex,
+		DB:       redisDatabase,
 	})
 
-	_, err = db.Client.Ping(ctx).Result()
+	_, err := client.Ping(ctx).Result()
 	if err != nil {
-		return fmt.Errorf("unable to connect to Redis database of host %v: %v", redisHost, err)
+		return nil, fmt.Errorf("unable to connect to Redis database of host %v: %v", redisHost, err)
 	}
 
 	log.Println("Connection to Redis database successful")
-	return nil
+
+	return &RedisClient{
+		Client: client,
+	}, nil
 }

@@ -3,8 +3,11 @@ package indexerutil
 import "time"
 
 const (
-	Timeout       = 4 * time.Second
-	MaxIndexWords = 1000
+	Timeout             = 4 * time.Second
+	MaxIndexWords       = 1000
+	WordsOpThreshold    = 1000
+	MetadataOpThreshold = 100
+	OutlinksOpThreshold = 100
 
 	WordsCollection      = "words"
 	MetadataCollection   = "metadata"

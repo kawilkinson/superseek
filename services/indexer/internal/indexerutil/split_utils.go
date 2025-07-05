@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func splitName(filename string) []string {
+func SplitName(filename string) []string {
 	parts := nameSplitPattern.Split(filename, -1)
 
 	var splitParts []string
@@ -19,7 +19,7 @@ func splitName(filename string) []string {
 	return splitParts
 }
 
-func splitURL(url string) []string {
+func SplitURL(url string) []string {
 	parts := urlSplitPattern.Split(url, -1)
 
 	var splitParts []string
