@@ -8,7 +8,7 @@ import (
 	"github.com/kawilkinson/services/indexer/internal/models"
 )
 
-func (db *RedisDatabase) GetOutlinks(ctx context.Context, normalizedURL string) *models.Outlinks {
+func (db *RedisClient) GetOutlinks(ctx context.Context, normalizedURL string) *models.Outlinks {
 	key := indexerutil.OutlinksPrefix + ":" + normalizedURL
 	result, err := db.Client.SMembers(ctx, key).Result()
 	if err != nil {
@@ -32,7 +32,7 @@ func (db *RedisDatabase) GetOutlinks(ctx context.Context, normalizedURL string) 
 	}
 }
 
-func (db *RedisDatabase) DeleteOutlinks(ctx context.Context, normalizedURL string) {
+func (db *RedisClient) DeleteOutlinks(ctx context.Context, normalizedURL string) {
 	key := indexerutil.OutlinksPrefix + ":" + normalizedURL
 	result, err := db.Client.Del(ctx, key).Result()
 	if err != nil {

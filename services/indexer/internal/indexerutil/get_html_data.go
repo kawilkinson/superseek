@@ -15,7 +15,7 @@ var newlinePattern = regexp.MustCompile(`\n+`)
 var whitespacePattern = regexp.MustCompile(`\s+`)
 var bracketsPattern = regexp.MustCompile(`\[[^\]]*]`)
 
-func getHTMLData(htmlData string) (map[string]interface{}, error) {
+func GetHTMLData(htmlData string) (map[string]interface{}, error) {
 	htmlReader := strings.NewReader(htmlData)
 	htmlRootNode, err := html.Parse(htmlReader)
 	if err != nil {

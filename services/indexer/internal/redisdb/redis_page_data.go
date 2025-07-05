@@ -8,7 +8,7 @@ import (
 	"github.com/kawilkinson/services/indexer/internal/models"
 )
 
-func (db *RedisDatabase) PopPage(ctx context.Context) string {
+func (db *RedisClient) PopPage(ctx context.Context) string {
 	poppedPage, err := db.Client.BRPop(ctx, indexerutil.Timeout, indexerutil.IndexerQueueKey).Result()
 	if err != nil {
 		log.Printf("unable to fetch page from message queue: %v", err)
@@ -25,7 +25,7 @@ func (db *RedisDatabase) PopPage(ctx context.Context) string {
 	return pageID
 }
 
-func (db *RedisDatabase) PeekPage(ctx context.Context) string {
+func (db *RedisClient) PeekPage(ctx context.Context) string {
 	peekedPage, err := db.Client.LRange(ctx, indexerutil.IndexerQueueKey, -1, -1).Result()
 	if err != nil {
 		log.Printf("unable to peek page from message queue: %v", err)
@@ -43,7 +43,7 @@ func (db *RedisDatabase) PeekPage(ctx context.Context) string {
 	return pageID
 }
 
-func (db *RedisDatabase) GetPageData(ctx context.Context, key string) *models.Page {
+func (db *RedisClient) GetPageData(ctx context.Context, key string) *models.Page {
 	pageHashed, err := db.Client.HGetAll(ctx, key).Result()
 	if err != nil {
 		log.Printf("unable to get page data from %s: %v", key, err)
@@ -62,7 +62,7 @@ func (db *RedisDatabase) GetPageData(ctx context.Context, key string) *models.Pa
 	return page
 }
 
-func (db *RedisDatabase) DeletePageData(ctx context.Context, key string) {
+func (db *RedisClient) DeletePageData(ctx context.Context, key string) {
 	result, err := db.Client.Del(ctx, key).Result()
 	if err != nil {
 		log.Printf("unable to delete key %s from Redis: %v", key, err)

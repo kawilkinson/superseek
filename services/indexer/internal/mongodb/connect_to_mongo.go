@@ -4,31 +4,27 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-type MongoConfig struct {
-	Host     string
-	Port     string
-	Username string
-	Password string
-	Database string
-}
-
 type MongoClient struct {
 	Client   *mongo.Client
 	Database *mongo.Database
 }
 
-func NewMongoClient(ctx context.Context, cfg MongoConfig) (*MongoClient, error) {
+func ConnectToMongo(ctx context.Context, mongoPort int, mongoHost, mongoUsername, mongoPassword, mongoDatabase string) (*MongoClient, error) {
 	uri := "mongodb://"
-	if cfg.Username != "" {
-		uri += cfg.Username + ":" + cfg.Password + "@"
+	if mongoUsername != "" {
+		uri += mongoUsername + ":" + mongoPassword + "@"
 	}
-	uri += cfg.Host + ":" + cfg.Port + "/" + cfg.Database + "?authSource=admin"
+
+	mongoPortStr := strconv.Itoa(mongoPort)
+
+	uri += mongoHost + ":" + mongoPortStr + "/" + mongoDatabase + "?authSource=admin"
 
 	client, err := mongo.Connect(options.Client().ApplyURI(uri))
 	if err != nil {
@@ -45,6 +41,6 @@ func NewMongoClient(ctx context.Context, cfg MongoConfig) (*MongoClient, error) 
 
 	return &MongoClient{
 		Client:   client,
-		Database: client.Database(cfg.Database),
+		Database: client.Database(mongoDatabase),
 	}, nil
 }

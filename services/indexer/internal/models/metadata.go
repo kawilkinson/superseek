@@ -15,7 +15,7 @@ type Metadata struct {
 	Keywords    map[string]int
 }
 
-func (m *Metadata) fromMap(data map[string]interface{}) (*Metadata, error) {
+func FromMap(data map[string]interface{}) (*Metadata, error) {
 	if data == nil {
 		log.Println("no data found for fromMap function for Metadata, skipping...")
 		return nil, nil
