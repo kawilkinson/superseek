@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -107,8 +106,8 @@ func main() {
 		}
 
 		log.Printf("counting words from %s...\n", pageID)
-		wordsFrequency := countWords(htmlData["text"].([]string))
-		keywords := mostCommonWords(wordsFrequency, indexerutil.MaxIndexWords)
+		wordsFrequency := indexerutil.CountWords(htmlData["text"].([]string))
+		keywords := indexerutil.MostCommonWords(wordsFrequency, indexerutil.MaxIndexWords)
 
 		urlWords := indexerutil.SplitURL(page.NormalizedURL)
 		for _, word := range urlWords {
@@ -147,15 +146,15 @@ func main() {
 		redisClient.DeleteOutlinks(ctx, page.NormalizedURL)
 		redisClient.PushToImageIndexerQueue(ctx, page.NormalizedURL)
 
-		ops.wordOps = flushIfNeeded(ctx, mongoClient, indexerutil.WordsCollection, ops.wordOps, indexerutil.WordsOpThreshold)
-		ops.metadataOps = flushIfNeeded(ctx, mongoClient, indexerutil.MetadataCollection, ops.metadataOps, indexerutil.MetadataOpThreshold)
-		ops.outlinkOps = flushIfNeeded(ctx, mongoClient, indexerutil.OutlinksCollection, ops.outlinkOps, indexerutil.OutlinksOpThreshold)
+		ops.wordOps = mongoClient.FlushIfNeeded(ctx, indexerutil.WordsCollection, ops.wordOps, indexerutil.WordsOpThreshold)
+		ops.metadataOps = mongoClient.FlushIfNeeded(ctx, indexerutil.MetadataCollection, ops.metadataOps, indexerutil.MetadataOpThreshold)
+		ops.outlinkOps = mongoClient.FlushIfNeeded(ctx, indexerutil.OutlinksCollection, ops.outlinkOps, indexerutil.OutlinksOpThreshold)
 	}
 
 	log.Println("final flush...")
-	flushIfAny(ctx, mongoClient, indexerutil.WordsCollection, ops.wordOps)
-	flushIfAny(ctx, mongoClient, indexerutil.MetadataCollection, ops.metadataOps)
-	flushIfAny(ctx, mongoClient, indexerutil.OutlinksCollection, ops.outlinkOps)
+	mongoClient.FlushIfAny(ctx, indexerutil.WordsCollection, ops.wordOps)
+	mongoClient.FlushIfAny(ctx, indexerutil.MetadataCollection, ops.metadataOps)
+	mongoClient.FlushIfAny(ctx, indexerutil.OutlinksCollection, ops.outlinkOps)
 
 	log.Println("shutting down...")
 
@@ -180,76 +179,4 @@ func loadEnvInt(key string, fallback int) int {
 
 	log.Println("unable to load environment variable, using integer fallback")
 	return fallback
-}
-
-func countWords(text []string) map[string]int {
-	wordsFrequency := make(map[string]int)
-
-	for _, word := range text {
-		_, exists := wordsFrequency[word]
-		if !exists {
-			wordsFrequency[word] = 1
-		} else {
-			wordsFrequency[word] += 1
-		}
-	}
-
-	return wordsFrequency
-}
-
-func flushIfNeeded(
-	ctx context.Context,
-	mc *mongodb.MongoClient,
-	collection string,
-	operations []mongo.WriteModel,
-	threshold int,
-) []mongo.WriteModel {
-	if len(operations) >= threshold {
-		log.Printf("flushing %s bulk ops (%d entries)...\n", collection, len(operations))
-		_, err := mc.PerformBatchOperations(ctx, operations, collection)
-		if err != nil {
-			log.Printf("error flushing %s ops: %v\n", collection, err)
-		}
-		return nil
-	}
-	return operations
-}
-
-func flushIfAny(ctx context.Context, mc *mongodb.MongoClient, collection string, operations []mongo.WriteModel) {
-	if len(operations) > 0 {
-		log.Printf("final flush for %s (%d entries)\n", collection, len(operations))
-		_, err := mc.PerformBatchOperations(ctx, operations, collection)
-		if err != nil {
-			log.Printf("error in final flush for %s: %v\n", collection, err)
-		}
-	}
-}
-
-func mostCommonWords(wordsFrequency map[string]int, n int) map[string]int {
-	type kv struct {
-		Key   string
-		Value int
-	}
-
-	var freqList []kv
-	for key, value := range wordsFrequency {
-		freqList = append(freqList, kv{key, value})
-	}
-
-	// sort by descending
-	sort.Slice(freqList, func(i, j int) bool {
-		// if same frequency on two words, sort alphabetically
-		if freqList[i].Value == freqList[j].Value {
-			return freqList[i].Key < freqList[j].Key
-		}
-
-		return freqList[i].Value > freqList[j].Value
-	})
-
-	topWords := make(map[string]int)
-	for i := 0; i < len(freqList) && i < n; i++ {
-		topWords[freqList[i].Key] = freqList[i].Value
-	}
-
-	return topWords
 }
