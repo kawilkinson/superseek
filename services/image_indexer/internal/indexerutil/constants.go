@@ -3,16 +3,13 @@ package indexerutil
 import "time"
 
 const (
-	Timeout             = 4 * time.Second
-	MaxIndexWords       = 1000
-	WordsOpThreshold    = 1000
-	MetadataOpThreshold = 100
-	OutlinksOpThreshold = 100
+	Timeout       = 4 * time.Second
+	MaxIndexWords = 1000
 
 	WordCollection       = "words"
+	WordImagesCollection = "word_images"
 	MetadataCollection   = "metadata"
-	OutlinkCollection    = "outlinks"
-	DictionaryCollection = "dictionary"
+	ImageCollection      = "images"
 
 	IndexerQueueKey      = "indexer_queue"
 	ImageIndexerQueueKey = "image_indexer_queue"

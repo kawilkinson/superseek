@@ -25,7 +25,7 @@ func CreateWordsEntryOperation(word, url string, tf int) mongo.WriteModel {
 }
 
 func (m *MongoClient) CreateWordsBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
-	return m.PerformBatchOperations(ctx, ops, indexerutil.WordsCollection)
+	return m.PerformBatchOperations(ctx, ops, indexerutil.WordCollection)
 }
 
 func (m *MongoClient) GetMetadata(ctx context.Context, normalizedURL string) (*models.Metadata, error) {
@@ -70,7 +70,7 @@ func CreateOutlinksEntryOperation(out models.Outlinks) mongo.WriteModel {
 }
 
 func (m *MongoClient) CreateOutlinksBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
-	return m.PerformBatchOperations(ctx, ops, indexerutil.OutlinksCollection)
+	return m.PerformBatchOperations(ctx, ops, indexerutil.OutlinkCollection)
 }
 
 func CreateDictionaryEntryOperation(word string) mongo.WriteModel {
