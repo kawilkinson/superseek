@@ -23,11 +23,21 @@ func (db *RedisClient) GetQueueSize(ctx context.Context) int64 {
 }
 
 func (db *RedisClient) SignalCrawler(ctx context.Context) {
+	if db.Client == nil {
+		log.Println("no Redis client found for signal crawler")
+		return
+	}
+
 	db.Client.LPush(ctx, indexerutil.SignalQueueKey, indexerutil.ResumeCrawl)
 	log.Println("signaled crawler")
 }
 
 func (db *RedisClient) PushToImageIndexerQueue(ctx context.Context, normalizedURL string) {
+	if db.Client == nil {
+		log.Println("no Redis client found for push to image indexer queue")
+		return
+	}
+
 	db.Client.LPush(ctx, indexerutil.ImageIndexerQueueKey, normalizedURL)
 	log.Printf("pushed %s to image indexer queue", normalizedURL)
 }
