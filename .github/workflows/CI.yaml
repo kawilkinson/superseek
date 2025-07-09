@@ -21,7 +21,7 @@ jobs:
       
       - name: Make sure crawler compiles
         working-directory: ./services/crawler
-        run: go build -v ./spider_main/main.go
+        run: go build -v ./main.go
 
       - name: Make sure tests succeed
         working-directory: ./services/crawler
