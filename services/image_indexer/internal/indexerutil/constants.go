@@ -63,7 +63,7 @@ var popularDomains = map[string]struct{}{
 }
 
 // stop words grabbed from here https://gist.github.com/sebleier/554280
-var stopWordsSet = map[string]struct{}{
+var StopWordsSet = map[string]struct{}{
 	"i": {}, "me": {}, "my": {}, "myself": {}, "we": {}, "our": {},
 	"ours": {}, "ourselves": {}, "you": {}, "your": {}, "yours": {},
 	"yourself": {}, "yourselves": {}, "he": {}, "him": {}, "his": {},
