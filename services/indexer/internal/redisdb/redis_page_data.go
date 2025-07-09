@@ -9,6 +9,11 @@ import (
 )
 
 func (db *RedisClient) PopPage(ctx context.Context) string {
+	if db.Client == nil {
+		log.Println("no Redis client found for pop page")
+		return ""
+	}
+	
 	poppedPage, err := db.Client.BRPop(ctx, indexerutil.Timeout, indexerutil.IndexerQueueKey).Result()
 	if err != nil {
 		log.Printf("unable to fetch page from message queue: %v", err)
@@ -26,6 +31,11 @@ func (db *RedisClient) PopPage(ctx context.Context) string {
 }
 
 func (db *RedisClient) PeekPage(ctx context.Context) string {
+	if db.Client == nil {
+		log.Println("no Redis client found for peek page")
+		return ""
+	}
+
 	peekedPage, err := db.Client.LRange(ctx, indexerutil.IndexerQueueKey, -1, -1).Result()
 	if err != nil {
 		log.Printf("unable to peek page from message queue: %v", err)
@@ -44,6 +54,11 @@ func (db *RedisClient) PeekPage(ctx context.Context) string {
 }
 
 func (db *RedisClient) GetPageData(ctx context.Context, key string) *models.Page {
+	if db.Client == nil {
+		log.Println("no Redis client found for get page data")
+		return nil
+	}
+
 	pageHashed, err := db.Client.HGetAll(ctx, key).Result()
 	if err != nil {
 		log.Printf("unable to get page data from %s: %v", key, err)
@@ -63,6 +78,11 @@ func (db *RedisClient) GetPageData(ctx context.Context, key string) *models.Page
 }
 
 func (db *RedisClient) DeletePageData(ctx context.Context, key string) {
+	if db.Client == nil {
+		log.Println("no Redis client found for delete page data")
+		return
+	}
+
 	result, err := db.Client.Del(ctx, key).Result()
 	if err != nil {
 		log.Printf("unable to delete key %s from Redis: %v", key, err)

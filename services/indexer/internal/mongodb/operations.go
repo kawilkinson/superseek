@@ -25,6 +25,11 @@ func CreateWordsEntryOperation(word, url string, tf int) mongo.WriteModel {
 }
 
 func (m *MongoClient) CreateWordsBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+	if len(ops) == 0 {
+		log.Println("no operations found to perform for create words bulk")
+		return nil, nil
+	}
+
 	return m.PerformBatchOperations(ctx, ops, indexerutil.WordCollection)
 }
 
@@ -59,6 +64,11 @@ func CreateMetadataEntryOperation(page models.Page, html models.Metadata, topWor
 }
 
 func (m *MongoClient) CreateMetadataBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+	if len(ops) == 0 {
+		log.Println("no operations found to perform for create metadata bulk")
+		return nil, nil
+	}
+
 	return m.PerformBatchOperations(ctx, ops, indexerutil.MetadataCollection)
 }
 
@@ -70,6 +80,11 @@ func CreateOutlinksEntryOperation(out models.Outlinks) mongo.WriteModel {
 }
 
 func (m *MongoClient) CreateOutlinksBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+	if len(ops) == 0 {
+		log.Println("no operations found to perform for create outlinks bulk")
+		return nil, nil
+	}
+
 	return m.PerformBatchOperations(ctx, ops, indexerutil.OutlinkCollection)
 }
 

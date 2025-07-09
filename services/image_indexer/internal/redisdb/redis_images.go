@@ -40,6 +40,11 @@ func (db *RedisClient) PeekPage(ctx context.Context) *string {
 }
 
 func (db *RedisClient) GetPageImages(ctx context.Context, normalizedURL string) []string {
+	if db.Client == nil {
+		log.Println("no Redis client found for get page images")
+		return nil
+	}
+
 	key := fmt.Sprintf("%s:%s", indexerutil.PageImagesPrefix, normalizedURL)
 
 	set, err := db.Client.SMembers(ctx, key).Result()
@@ -66,6 +71,10 @@ func (db *RedisClient) DeletePageImages(ctx context.Context, normalizedURL strin
 }
 
 func (db *RedisClient) PopImageData(ctx context.Context, imageURL string) *models.Image {
+	if db.Client == nil {
+		log.Println("no Redis client found for pop image data")
+		return nil
+	}
 	key := fmt.Sprintf("%s:%s", indexerutil.ImagePrefix, imageURL)
 	imageMap, err := db.Client.HGetAll(ctx, key).Result()
 	if err != nil {

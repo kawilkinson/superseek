@@ -9,6 +9,10 @@ import (
 )
 
 func (db *RedisClient) GetOutlinks(ctx context.Context, normalizedURL string) *models.Outlinks {
+	if db.Client == nil {
+		log.Println("no Redis client found for get outlinks")
+		return nil
+	}
 	key := indexerutil.OutlinksPrefix + ":" + normalizedURL
 	result, err := db.Client.SMembers(ctx, key).Result()
 	if err != nil {
@@ -33,6 +37,10 @@ func (db *RedisClient) GetOutlinks(ctx context.Context, normalizedURL string) *m
 }
 
 func (db *RedisClient) DeleteOutlinks(ctx context.Context, normalizedURL string) {
+	if db.Client == nil {
+		log.Println("no Redis client found for delete outlinks")
+		return 
+	}
 	key := indexerutil.OutlinksPrefix + ":" + normalizedURL
 	result, err := db.Client.Del(ctx, key).Result()
 	if err != nil {
