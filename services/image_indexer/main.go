@@ -104,7 +104,7 @@ func main() {
 		var validImageOps []mongo.WriteModel
 		var wordImageOps []mongo.WriteModel
 		var wg sync.WaitGroup
-
+		//create concurrent operations for faster performance
 		for _, imageURL := range pageImages {
 			wg.Add(1)
 			go func(imageURL string) {
