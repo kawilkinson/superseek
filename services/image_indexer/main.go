@@ -163,13 +163,19 @@ func main() {
 
 		if len(ops.wordImageOps) >= indexerutil.WordImagesOpThreshold {
 			log.Println("flushing word image ops...")
-			mongoClient.CreateWordImagesBulk(ctx, ops.wordImageOps)
+			_, err := mongoClient.CreateWordImagesBulk(ctx, ops.wordImageOps)
+			if err != nil {
+				log.Printf("error trying to create word images bulk: %v\n", err)
+			}
 			ops.wordImageOps = nil
 		}
 
 		if len(ops.imageOps) >= indexerutil.ImageOpThreshold {
 			log.Println("flushing image ops...")
-			mongoClient.CreateImagesBulk(ctx, ops.imageOps)
+			_, err := mongoClient.CreateImagesBulk(ctx, ops.imageOps)
+			if err != nil {
+				log.Printf("error try to create images bulk: %v\n", err)
+			}
 			ops.imageOps = nil
 		}
 
@@ -178,10 +184,16 @@ func main() {
 
 	log.Println("performing final bulk operations before shutdown...")
 	if len(ops.wordImageOps) > 0 {
-		mongoClient.CreateWordImagesBulk(ctx, ops.wordImageOps)
+		_, err := mongoClient.CreateWordImagesBulk(ctx, ops.wordImageOps)
+		if err != nil {
+			log.Printf("error trying to final create word images bulk: %v", err)
+		}
 	}
 	if len(ops.imageOps) > 0 {
-		mongoClient.CreateImagesBulk(ctx, ops.imageOps)
+		_, err := mongoClient.CreateImagesBulk(ctx, ops.imageOps)
+		if err != nil {
+			log.Printf("error trying to final create images bulk: %v", err)
+		}
 	}
 
 	log.Println("shutting down...")
