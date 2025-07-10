@@ -9,19 +9,20 @@ import (
 	"github.com/kawilkinson/superseek/services/image_indexer/internal/models"
 )
 
-func (db *RedisClient) PopImage(ctx context.Context) *string {
+func (db *RedisClient) PopImage(ctx context.Context) string {
 	if db.Client == nil {
 		log.Println("no Redis client found for pop image")
-		return nil
+		return ""
 	}
 
 	result, err := db.Client.BRPop(ctx, indexerutil.Timeout, indexerutil.ImageIndexerQueueKey).Result()
 	if err != nil || len(result) != 2 {
 		log.Printf("unable to get image from message queue in Redis database: %v", err)
+		return ""
 	}
 
 	pageID := result[1]
-	return &pageID
+	return pageID
 }
 
 func (db *RedisClient) PeekPage(ctx context.Context) *string {
@@ -39,21 +40,19 @@ func (db *RedisClient) PeekPage(ctx context.Context) *string {
 	return &result[0]
 }
 
-func (db *RedisClient) GetPageImages(ctx context.Context, normalizedURL string) []string {
+func (db *RedisClient) GetPageImages(ctx context.Context, normalizedURL string) ([]string, error) {
 	if db.Client == nil {
-		log.Println("no Redis client found for get page images")
-		return nil
+		return nil, fmt.Errorf("no Redis client found for get page images")
 	}
 
 	key := fmt.Sprintf("%s:%s", indexerutil.PageImagesPrefix, normalizedURL)
 
 	set, err := db.Client.SMembers(ctx, key).Result()
 	if err != nil || len(set) == 0 {
-		log.Printf("unable to get page images for key %s: %v", key, err)
-		return nil
+		return nil, fmt.Errorf("unable to get page images for key %s: %v", key, err)
 	}
 
-	return set
+	return set, nil
 }
 
 func (db *RedisClient) DeletePageImages(ctx context.Context, normalizedURL string) {

@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-func (m *MongoClient) getKeywords(ctx context.Context, mongoID string) map[string]int {
+func (m *MongoClient) GetKeywords(ctx context.Context, mongoID string) (map[string]int, error) {
 	log.Printf("getting keywords for %s\n", mongoID)
 	collection := m.Database.Collection(indexerutil.MetadataCollection)
 
@@ -24,8 +24,7 @@ func (m *MongoClient) getKeywords(ctx context.Context, mongoID string) map[strin
 	var result bson.M
 	err := collection.FindOne(ctx, filter, options.FindOne().SetProjection(projection)).Decode(&result)
 	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
-		log.Printf("error finding document with %s: %v", mongoID, err)
-		return nil
+		return nil, fmt.Errorf("error finding document with %s: %v", mongoID, err)
 	}
 
 	if keywordsRaw, exists := result["keywords"]; exists {
@@ -38,15 +37,14 @@ func (m *MongoClient) getKeywords(ctx context.Context, mongoID string) map[strin
 					keywords[key] = int(count)
 				}
 			}
-			return keywords
+			return keywords, nil
 		}
 	}
 
 	log.Printf("no keywords found for %s, reprocessing fields", mongoID)
 	err = collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {
-		log.Printf("error finding document with %s: %v", mongoID, err)
-		return nil
+		return nil, fmt.Errorf("error finding document with %s: %v", mongoID, err)
 	}
 
 	fields := []string{"summary_text", "description", "title"}
@@ -70,7 +68,7 @@ func (m *MongoClient) getKeywords(ctx context.Context, mongoID string) map[strin
 		wordCount[word]++
 	}
 
-	return wordCount
+	return wordCount, nil
 }
 
 func (m *MongoClient) CreateWordImagesEntryOperation(word, url string, weight int) mongo.WriteModel {

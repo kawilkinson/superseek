@@ -5,16 +5,21 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path"
 	"strconv"
+	"strings"
+	"sync"
 	"syscall"
 
+	"github.com/kawilkinson/superseek/services/image_indexer/internal/indexerutil"
 	"github.com/kawilkinson/superseek/services/image_indexer/internal/mongodb"
 	"github.com/kawilkinson/superseek/services/image_indexer/internal/redisdb"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type Operations struct {
-	imageOps []mongo.WriteModel
+	imageOps     []mongo.WriteModel
+	wordImageOps []mongo.WriteModel
 }
 
 func main() {
@@ -68,7 +73,119 @@ func main() {
 		log.Println("waiting for message queue...")
 
 		// continue the loop with all the operations to the redis and mongo database
+		pageID := redisClient.PopImage(ctx)
+		if pageID == "" {
+			log.Println("no page ID found")
+			continue
+		}
+
+		log.Printf("getting keywords of %s...\n", pageID)
+		mongoID := strings.TrimPrefix(pageID, "page_images:")
+		keywords, err := mongoClient.GetKeywords(ctx, mongoID)
+		if err != nil {
+			log.Printf("unable to get keywords for %s: %v\n", mongoID, err)
+			continue
+		}
+
+		pageImages, err := redisClient.GetPageImages(ctx, pageID)
+		if err != nil {
+			log.Printf("unable to get page images for %s: %v\n", pageID, err)
+			continue
+		}
+
+		if len(pageImages) == 0 {
+			log.Printf("no images found for %s, skipping...\n", pageID)
+			continue
+		}
+
+		log.Printf("got %d images from Redis database...", len(pageImages))
+
+		var mu sync.Mutex
+		var validImageOps []mongo.WriteModel
+		var wordImageOps []mongo.WriteModel
+		var wg sync.WaitGroup
+
+		for _, imageURL := range pageImages {
+			wg.Add(1)
+			go func(imageURL string) {
+				defer wg.Done()
+
+				if !indexerutil.IsValidImage(imageURL, indexerutil.ImgMinWidth, indexerutil.ImgMinHeight) {
+					log.Printf("invalid image, deleting %s\n", imageURL)
+					redisClient.DeleteImageData(ctx, imageURL)
+					return
+				}
+
+				if strings.HasSuffix(imageURL, ".svg") || strings.Contains(imageURL, "icons") {
+					redisClient.DeleteImageData(ctx, imageURL)
+					return
+				}
+
+				imageData := redisClient.PopImageData(ctx, imageURL)
+				if imageData == nil {
+					log.Printf("unable to get image data for %s", imageURL)
+					return
+				}
+
+				imageData.Filename = path.Base(imageURL)
+				words := indexerutil.SplitName(imageData.Filename)
+
+				var localOps []mongo.WriteModel
+				for _, word := range words {
+					score := 30
+					if val, exists := keywords[word]; exists {
+						score = val * 100
+					}
+
+					op := mongoClient.CreateWordImagesEntryOperation(word, imageURL, score)
+					localOps = append(localOps, op)
+				}
+
+				saveImageOp := mongoClient.CreateImageOperation(imageData)
+
+				mu.Lock()
+				validImageOps = append(validImageOps, saveImageOp)
+				wordImageOps = append(wordImageOps, localOps...)
+				mu.Unlock()
+			}(imageURL)
+		}
+		wg.Wait()
+
+		for word, weight := range keywords {
+			for _, imageURL := range pageImages {
+				op := mongoClient.CreateWordImagesEntryOperation(word, imageURL, weight)
+				ops.wordImageOps = append(ops.wordImageOps, op)
+			}
+		}
+
+		ops.imageOps = append(ops.imageOps, validImageOps...)
+		ops.wordImageOps = append(ops.wordImageOps, wordImageOps...)
+
+		if len(ops.wordImageOps) >= indexerutil.WordImagesOpThreshold {
+			log.Println("flushing word image ops...")
+			mongoClient.CreateWordImagesBulk(ctx, ops.wordImageOps)
+			ops.wordImageOps = nil
+		}
+
+		if len(ops.imageOps) >= indexerutil.ImageOpThreshold {
+			log.Println("flushing image ops...")
+			mongoClient.CreateImagesBulk(ctx, ops.imageOps)
+			ops.imageOps = nil
+		}
+
+		redisClient.DeletePageImages(ctx, mongoID)
 	}
+
+	log.Println("performing final bulk operations before shutdown...")
+	if len(ops.wordImageOps) > 0 {
+		mongoClient.CreateWordImagesBulk(ctx, ops.wordImageOps)
+	}
+	if len(ops.imageOps) > 0 {
+		mongoClient.CreateImagesBulk(ctx, ops.imageOps)
+	}
+
+	log.Println("shutting down...")
+	os.Exit(0)
 }
 
 func loadEnvString(key string, fallback string) string {
