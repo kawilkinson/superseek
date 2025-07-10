@@ -5,6 +5,10 @@ import "time"
 const (
 	Timeout       = 4 * time.Second
 	MaxIndexWords = 1000
+	WordImagesOpThreshold = 500
+	ImageOpThreshold = 100
+	ImgMinWidth   = 100
+	ImgMinHeight  = 500
 
 	WordCollection       = "words"
 	WordImagesCollection = "word_images"
