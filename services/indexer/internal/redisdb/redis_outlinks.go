@@ -39,7 +39,7 @@ func (db *RedisClient) GetOutlinks(ctx context.Context, normalizedURL string) *m
 func (db *RedisClient) DeleteOutlinks(ctx context.Context, normalizedURL string) {
 	if db.Client == nil {
 		log.Println("no Redis client found for delete outlinks")
-		return 
+		return
 	}
 	key := indexerutil.OutlinksPrefix + ":" + normalizedURL
 	result, err := db.Client.Del(ctx, key).Result()

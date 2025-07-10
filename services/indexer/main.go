@@ -140,7 +140,10 @@ func main() {
 		for _, word := range htmlData["text"].([]string) {
 			lowerWords = append(lowerWords, strings.ToLower(word))
 		}
-		mongoClient.AddWordsToDictionary(ctx, lowerWords)
+		_, err = mongoClient.AddWordsToDictionary(ctx, lowerWords)
+		if err != nil {
+			log.Printf("unable to add words to dictionary for %s: %v", pageID, err)
+		}
 
 		redisClient.DeletePageData(ctx, pageID)
 		redisClient.DeleteOutlinks(ctx, page.NormalizedURL)

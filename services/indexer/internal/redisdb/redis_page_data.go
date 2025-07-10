@@ -13,7 +13,7 @@ func (db *RedisClient) PopPage(ctx context.Context) string {
 		log.Println("no Redis client found for pop page")
 		return ""
 	}
-	
+
 	poppedPage, err := db.Client.BRPop(ctx, indexerutil.Timeout, indexerutil.IndexerQueueKey).Result()
 	if err != nil {
 		log.Printf("unable to fetch page from message queue: %v", err)

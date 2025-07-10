@@ -5,8 +5,8 @@ on:
     branches: [main]
 
 jobs:
-  tests:
-    name: Test Crawler Service
+  crawler:
+    name: Test crawler service
     runs-on: ubuntu-latest
 
     steps:
@@ -36,4 +36,67 @@ jobs:
 
       - name: Test if code is idiomatically formatted in crawler service
         working-directory: ./services/crawler 
+        run: test -z "$(go fmt ./...)"
+  indexer:
+    name: Test indexer service
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.1"
+          cache-dependency-path: services/indexer/go.sum
+      
+      - name: Make sure indexer compiles
+        working-directory: ./services/indexer
+        run: go build -v ./main.go
+
+      - name: Make sure tests succeed
+        working-directory: ./services/indexer
+        run: go test ./... -cover
+
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run gosec
+        working-directory: ./services/indexer
+        run: gosec ./...
+
+      - name: Test if code is idiomatically formatted in indexer service
+        working-directory: ./services/indexer
+        run: test -z "$(go fmt ./...)"
+  
+  image_indexer:
+    name: Test image indexer service
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.1"
+          cache-dependency-path: services/image_indexer/go.sum
+      
+      - name: Make sure indexer compiles
+        working-directory: ./services/image_indexer
+        run: go build -v ./main.go
+
+      - name: Make sure tests succeed
+        working-directory: ./services/image_indexer
+        run: go test ./... -cover
+
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run gosec
+        working-directory: ./services/image_indexer
+        run: gosec ./...
+
+      - name: Test if code is idiomatically formatted in image indexer service
+        working-directory: ./services/image_indexer
         run: test -z "$(go fmt ./...)"
