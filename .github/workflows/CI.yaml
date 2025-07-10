@@ -72,6 +72,8 @@ jobs:
   
   image_indexer:
     name: Test image indexer service
+    runs-on: ubuntu-latest
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
