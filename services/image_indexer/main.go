@@ -129,7 +129,7 @@ func main() {
 				}
 
 				imageData.Filename = path.Base(imageURL)
-				words := indexerutil.SplitName(imageData.Filename)
+				words := indexerutil.SplitFilename(imageData.Filename)
 
 				var localOps []mongo.WriteModel
 				for _, word := range words {
