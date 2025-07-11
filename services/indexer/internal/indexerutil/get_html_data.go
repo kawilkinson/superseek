@@ -9,10 +9,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-var nameSplitPattern = regexp.MustCompile(`[-_./\s]+`)
+// COMMENTED OUT FOR NOW, NOT USED
+// var nameSplitPattern = regexp.MustCompile(`[-_./\s]+`)
+
 var urlSplitPattern = regexp.MustCompile(`[.,\-_\/+:\(\)]+`)
-var newlinePattern = regexp.MustCompile(`\n+`)
-var whitespacePattern = regexp.MustCompile(`\s+`)
 var bracketsPattern = regexp.MustCompile(`\[[^\]]*]`)
 
 func GetHTMLData(htmlData string) (map[string]interface{}, error) {
@@ -28,8 +28,8 @@ func GetHTMLData(htmlData string) (map[string]interface{}, error) {
 
 	recurseHTMLTree(htmlRootNode, &metaTags, &paragraphs, &title)
 
-	fullText := strings.Join(paragraphs, " ")
-	cleanText := bracketsPattern.ReplaceAllString(fullText, "")
+	unfilteredText := strings.Join(paragraphs, " ")
+	cleanText := bracketsPattern.ReplaceAllString(unfilteredText, "")
 	words := strings.Fields(cleanText)
 
 	var summary string
@@ -37,6 +37,10 @@ func GetHTMLData(htmlData string) (map[string]interface{}, error) {
 		summary = strings.Join(words[:500], " ")
 	} else {
 		summary = strings.Join(words, " ")
+	}
+
+	if len(summary) == 0 {
+		return nil, fmt.Errorf("no valid text found from HTML data")
 	}
 
 	tokens := tokenizeLargeText(summary, 10000)
@@ -61,6 +65,10 @@ func GetHTMLData(htmlData string) (map[string]interface{}, error) {
 }
 
 func recurseHTMLTree(node *html.Node, metaTags *map[string]string, paragraphs *[]string, title *string) {
+	if node == nil {
+		return
+	}
+
 	if node.Type == html.ElementNode {
 		switch node.Data {
 		case "meta":

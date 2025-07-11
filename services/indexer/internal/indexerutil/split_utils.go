@@ -4,20 +4,21 @@ import (
 	"strings"
 )
 
-func SplitName(filename string) []string {
-	parts := nameSplitPattern.Split(filename, -1)
+// COMMENTED OUT FOR NOW, NOT USED
+// func SplitName(filename string) []string {
+// 	parts := nameSplitPattern.Split(filename, -1)
 
-	var splitParts []string
-	for _, part := range parts {
-		if !existsInSet(part, fileTypes) &&
-			!existsInSet(strings.ToLower(part), fileTypes) &&
-			!strings.Contains(part, "px") {
-			splitParts = append(splitParts, strings.ToLower(part))
-		}
-	}
+// 	var splitParts []string
+// 	for _, part := range parts {
+// 		if !existsInSet(part, fileTypes) &&
+// 			!existsInSet(strings.ToLower(part), fileTypes) &&
+// 			!strings.Contains(part, "px") {
+// 			splitParts = append(splitParts, strings.ToLower(part))
+// 		}
+// 	}
 
-	return splitParts
-}
+// 	return splitParts
+// }
 
 func SplitURL(url string) []string {
 	parts := urlSplitPattern.Split(url, -1)
