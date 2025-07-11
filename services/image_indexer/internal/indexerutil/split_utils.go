@@ -6,7 +6,6 @@ import (
 )
 
 var nameSplitPattern = regexp.MustCompile(`[-_./\s]+`)
-var urlSplitPattern = regexp.MustCompile(`[.,\-_\/+:\(\)]+`)
 
 func SplitFilename(filename string) []string {
 	parts := nameSplitPattern.Split(filename, -1)
@@ -16,19 +15,6 @@ func SplitFilename(filename string) []string {
 		part = strings.ToLower(part)
 		if !existsInSet(part, fileTypes) && !strings.Contains(part, "px") {
 			splitParts = append(splitParts, part)
-		}
-	}
-
-	return splitParts
-}
-
-func SplitURL(url string) []string {
-	parts := urlSplitPattern.Split(url, -1)
-
-	var splitParts []string
-	for _, part := range parts {
-		if !existsInSet(part, popularDomains) && !existsInSet(strings.ToLower(part), popularDomains) {
-			splitParts = append(splitParts, strings.ToLower(part))
 		}
 	}
 
