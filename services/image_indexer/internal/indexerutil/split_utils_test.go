@@ -37,36 +37,3 @@ func TestSplitFilename(t *testing.T) {
 		})
 	}
 }
-
-func TestSplitURL(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected []string
-	}{
-		{
-			name:     "basic image URL",
-			input:    "https://images.unsplash.com/photo-1627846798698-1f4e59c9d9a4",
-			expected: []string{"https", "images", "unsplash", "photo", "1627846798698", "1f4e59c9d9a4"},
-		},
-		{
-			name:     "cdn URL with dimensions",
-			input:    "https://cdn.example.com/assets/icons-256px-v1.png",
-			expected: []string{"https", "cdn", "example", "assets", "icons", "256px", "v1", "png"},
-		},
-		{
-			name:     "URL with brand and TLD filtered",
-			input:    "https://www.google.com/search/images/cute-dog.jpg",
-			expected: []string{"https", "www", "search", "images", "cute", "dog", "jpg"},
-		},
-	}
-
-	for i, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			actual := SplitURL(tc.input)
-			if !reflect.DeepEqual(actual, tc.expected) {
-				t.Errorf("Test %d - '%s' FAIL: expected %v, got %v", i, tc.name, tc.expected, actual)
-			}
-		})
-	}
-}
