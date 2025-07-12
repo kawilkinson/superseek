@@ -24,18 +24,18 @@ func CreateWordsEntryOperation(word, url string, tf int) mongo.WriteModel {
 		SetUpsert(true)
 }
 
-func (m *MongoClient) CreateWordsBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+func (mc *MongoClient) CreateWordsBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
 	if len(ops) == 0 {
 		log.Println("no operations found to perform for create words bulk")
 		return nil, nil
 	}
 
-	return m.PerformBatchOperations(ctx, ops, indexerutil.WordCollection)
+	return mc.PerformBatchOperations(ctx, ops, indexerutil.WordCollection)
 }
 
-func (m *MongoClient) GetMetadata(ctx context.Context, normalizedURL string) (*models.Metadata, error) {
+func (mc *MongoClient) GetMetadata(ctx context.Context, normalizedURL string) (*models.Metadata, error) {
 	var meta models.Metadata
-	coll := m.Database.Collection(indexerutil.MetadataCollection)
+	coll := mc.Database.Collection(indexerutil.MetadataCollection)
 
 	err := coll.FindOne(ctx, bson.M{"_id": normalizedURL}).Decode(&meta)
 	if err == mongo.ErrNoDocuments {
@@ -63,13 +63,13 @@ func CreateMetadataEntryOperation(page models.Page, html models.Metadata, topWor
 		SetUpsert(true)
 }
 
-func (m *MongoClient) CreateMetadataBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+func (mc *MongoClient) CreateMetadataBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
 	if len(ops) == 0 {
 		log.Println("no operations found to perform for create metadata bulk")
 		return nil, nil
 	}
 
-	return m.PerformBatchOperations(ctx, ops, indexerutil.MetadataCollection)
+	return mc.PerformBatchOperations(ctx, ops, indexerutil.MetadataCollection)
 }
 
 func CreateOutlinksEntryOperation(out models.Outlinks) mongo.WriteModel {
@@ -79,13 +79,13 @@ func CreateOutlinksEntryOperation(out models.Outlinks) mongo.WriteModel {
 		SetUpsert(true)
 }
 
-func (m *MongoClient) CreateOutlinksBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+func (mc *MongoClient) CreateOutlinksBulk(ctx context.Context, ops []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
 	if len(ops) == 0 {
 		log.Println("no operations found to perform for create outlinks bulk")
 		return nil, nil
 	}
 
-	return m.PerformBatchOperations(ctx, ops, indexerutil.OutlinkCollection)
+	return mc.PerformBatchOperations(ctx, ops, indexerutil.OutlinkCollection)
 }
 
 func CreateDictionaryEntryOperation(word string) mongo.WriteModel {
@@ -95,7 +95,7 @@ func CreateDictionaryEntryOperation(word string) mongo.WriteModel {
 		SetUpsert(true)
 }
 
-func (m *MongoClient) AddWordsToDictionary(ctx context.Context, words []string) (*mongo.BulkWriteResult, error) {
+func (mc *MongoClient) AddWordsToDictionary(ctx context.Context, words []string) (*mongo.BulkWriteResult, error) {
 	ops := make([]mongo.WriteModel, 0, len(words))
 	for _, word := range words {
 		ops = append(ops, CreateDictionaryEntryOperation(word))
@@ -105,10 +105,10 @@ func (m *MongoClient) AddWordsToDictionary(ctx context.Context, words []string) 
 		return nil, nil
 	}
 
-	return m.PerformBatchOperations(ctx, ops, indexerutil.DictionaryCollection)
+	return mc.PerformBatchOperations(ctx, ops, indexerutil.DictionaryCollection)
 }
 
-func (m *MongoClient) PerformBatchOperations(
+func (mc *MongoClient) PerformBatchOperations(
 	ctx context.Context,
 	operations []mongo.WriteModel,
 	collectionName string) (*mongo.BulkWriteResult, error) {
@@ -117,7 +117,7 @@ func (m *MongoClient) PerformBatchOperations(
 		return nil, nil
 	}
 
-	coll := m.Database.Collection(collectionName)
+	coll := mc.Database.Collection(collectionName)
 	writeResults, err := coll.BulkWrite(ctx, operations, options.BulkWrite().SetOrdered(false))
 	if err != nil {
 		return nil, fmt.Errorf("unable to perform bulk write to mongo db: %v", err)
