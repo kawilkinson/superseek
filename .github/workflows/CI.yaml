@@ -102,3 +102,36 @@ jobs:
       - name: Test if code is idiomatically formatted in image indexer service
         working-directory: ./services/image_indexer
         run: test -z "$(go fmt ./...)"
+  
+  pagerank:
+    name: Test pagerank service
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.1"
+          cache-dependency-path: services/pagerank/go.sum
+      
+      - name: Make sure indexer compiles
+        working-directory: ./services/pagerank
+        run: go build -v ./main.go
+
+      - name: Make sure tests succeed
+        working-directory: ./services/pagerank
+        run: go test ./... -cover
+
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run gosec
+        working-directory: ./services/pagerank
+        run: gosec ./...
+
+      - name: Test if code is idiomatically formatted in image indexer service
+        working-directory: ./services/pagerank
+        run: test -z "$(go fmt ./...)"
