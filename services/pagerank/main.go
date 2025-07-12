@@ -4,18 +4,13 @@ import (
 	"context"
 	"log"
 	"os"
-	"sort"
 	"strconv"
 
 	"github.com/kawilkinson/superseek/services/pagerank/internal/mongodb"
+	"github.com/kawilkinson/superseek/services/pagerank/internal/pagerankutils"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
-
-type SortedPageRanks struct {
-	URL  string
-	Rank float64
-}
 
 // entry into PageRank service using the PageRank algorithm
 func main() {
@@ -42,45 +37,10 @@ func main() {
 	}
 
 	backlinks := make(map[string][]string)
-	
-	cursorBacklinks, err := backlinksColl.Find(ctx, bson.D{})
-	if err != nil {
-		log.Fatalf("unable to get backlinks from Mongo database: %v", err)
-	}
-	defer cursorBacklinks.Close(ctx)
-
-	for cursorBacklinks.Next(ctx) {
-		var doc struct {
-			ID    string   `bson:"_id"`
-			Links []string `bson:"links"`
-		}
-
-		if err := cursorBacklinks.Decode(&doc); err != nil {
-			log.Fatalf("unable to decode backlink document: %v", err)
-		}
-
-		backlinks[doc.ID] = doc.Links
-	}
+	mongoClient.InsertBacklinks(ctx, backlinksColl, backlinks)
 
 	outlinksCount := make(map[string]int)
-	cursorOutlinks, err := outlinksColl.Find(ctx, bson.D{})
-	if err != nil {
-		log.Fatalf("unable to get outlinks from Mongo Database")
-	}
-	defer cursorOutlinks.Close(ctx)
-
-	for cursorOutlinks.Next(ctx) {
-		var doc struct {
-			ID    string   `bson:"_id"`
-			Links []string `bson:"links"`
-		}
-
-		if err := cursorOutlinks.Decode(&doc); err != nil {
-			log.Fatalf("unable to decode outlink document: %v", err)
-		}
-
-		outlinksCount[doc.ID] = len(doc.Links)
-	}
+	mongoClient.InsertOutlinks(ctx, outlinksColl, outlinksCount)
 
 	pageRank := make(map[string]float64)
 	for url := range outlinksCount {
@@ -89,63 +49,12 @@ func main() {
 
 	log.Printf("number of URLs found: %d\n", count)
 
-	iterations := 10
-	damping := 0.85
-	for i := 0; i < iterations; i++ {
-		newPageRank := make(map[string]float64)
-
-		for url := range pageRank {
-			var newCumulativeRank float64
-
-			if backlinksForURL, exists := backlinks[url]; exists {
-				for _, backlink := range backlinksForURL {
-					outlinkCount, outlinkExists := outlinksCount[backlink]
-					backlinkRank, backlinkExists := pageRank[backlink]
-
-					if backlinkExists && outlinkExists {
-						newCumulativeRank += (backlinkRank / float64(outlinkCount))
-					}
-				}
-			}
-			newPageRank[url] = (1-damping)/float64(count) + (damping * newCumulativeRank)
-		}
-		pageRank = newPageRank
-	}
-
-	sortedPageRanks := []SortedPageRanks{}
-	for url, rank := range pageRank {
-		sortedPageRanks = append(sortedPageRanks, SortedPageRanks{
-			URL:  url,
-			Rank: rank,
-		})
-	}
-
-	sort.Slice(sortedPageRanks, func(i, j int) bool {
-		return sortedPageRanks[i].Rank > sortedPageRanks[j].Rank
-	})
-
-	log.Println("sorted page rank values:")
-
-	for _, pageRank := range sortedPageRanks {
-		log.Printf("page URL: %s, page rank: %f\n", pageRank.URL, pageRank.Rank)
-	}
+	sortedPageRanks := pagerankutils.PageRankSort(pageRank, backlinks, outlinksCount, count)
 
 	var bulkOps []mongo.WriteModel
-	for _, pageRank := range sortedPageRanks {
-		bulkOps = append(bulkOps, mongo.NewUpdateOneModel().
-			SetFilter(bson.D{
-				{Key: "_id", Value: pageRank.URL}}).
-			SetUpdate(bson.D{
-				{Key: "$set", Value: bson.D{
-					{Key: "rank", Value: pageRank.Rank}}}}).
-			SetUpsert(true))
-	}
-
-	if len(bulkOps) > 0 {
-		_, err := mongoClient.Database.Collection("pagerank").BulkWrite(ctx, bulkOps)
-		if err != nil {
-			log.Fatalf("unable to batch insert page rank values: %v", err)
-		}
+	err = mongoClient.CreatePageRankEntryOperation(ctx, bulkOps, sortedPageRanks)
+	if err != nil {
+		log.Fatalf("%v", err)
 	}
 
 	log.Println("page rank values are now saved to the Mongo database")
