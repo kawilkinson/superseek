@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-// entry into PageRank service using the PageRank algorithm
 func main() {
 	mongoHost := loadEnvString("MONGO_HOST", "localhost")
 	mongoPort := loadEnvInt("MONGO_PORT", 27017)
@@ -37,10 +36,10 @@ func main() {
 	}
 
 	backlinks := make(map[string][]string)
-	mongoClient.InsertBacklinks(ctx, backlinksColl, backlinks)
+	mongodb.InsertBacklinks(ctx, backlinksColl, backlinks)
 
 	outlinksCount := make(map[string]int)
-	mongoClient.InsertOutlinks(ctx, outlinksColl, outlinksCount)
+	mongodb.InsertOutlinks(ctx, outlinksColl, outlinksCount)
 
 	pageRank := make(map[string]float64)
 	for url := range outlinksCount {

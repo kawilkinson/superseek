@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func (mc *MongoClient) InsertBacklinks(ctx context.Context, backlinksColl *mongo.Collection, backlinks map[string][]string) {
+func InsertBacklinks(ctx context.Context, backlinksColl *mongo.Collection, backlinks map[string][]string) {
 	cursorBacklinks, err := backlinksColl.Find(ctx, bson.D{})
 	if err != nil {
 		log.Fatalf("unable to get backlinks from Mongo database: %v", err)
@@ -29,7 +29,7 @@ func (mc *MongoClient) InsertBacklinks(ctx context.Context, backlinksColl *mongo
 	}
 }
 
-func (mc *MongoClient) InsertOutlinks(ctx context.Context, outlinksColl *mongo.Collection, outlinksCount map[string]int) {
+func InsertOutlinks(ctx context.Context, outlinksColl *mongo.Collection, outlinksCount map[string]int) {
 	cursorOutlinks, err := outlinksColl.Find(ctx, bson.D{})
 	if err != nil {
 		log.Fatalf("unable to get outlinks from Mongo Database")
