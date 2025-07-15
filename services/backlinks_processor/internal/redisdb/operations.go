@@ -21,16 +21,16 @@ func (db *RedisClient) GetAllBacklinksKeys(ctx context.Context) ([]string, error
 	return result, nil
 }
 
-func (db *RedisClient) GetAllBacklinks(ctx context.Context, backlinks []string) ([]models.Backlinks, error) {
+func (db *RedisClient) GetAllBacklinks(ctx context.Context, backlinkKeys []string) ([]models.Backlinks, error) {
 	if db.Client == nil {
 		return nil, fmt.Errorf("unable to perform get all backlinks operation, no Redis client found")
 	}
 
 	var backlinksURLs []string
 	pipeline := db.Client.Pipeline()
-	cmds := make([]*redis.StringSliceCmd, 0, len(backlinks))
+	cmds := make([]*redis.StringSliceCmd, 0, len(backlinkKeys))
 
-	for _, backlinksID := range backlinks {
+	for _, backlinksID := range backlinkKeys {
 		url := backlinksID[10:]
 		backlinksURLs = append(backlinksURLs, url)
 		cmd := pipeline.SMembers(ctx, backlinksID)
@@ -46,7 +46,7 @@ func (db *RedisClient) GetAllBacklinks(ctx context.Context, backlinks []string) 
 	for i, cmd := range cmds {
 		members, err := cmd.Result()
 		if err != nil && err != redis.Nil {
-			return nil, fmt.Errorf("unable to get SMembers for key %s: %v", backlinks[i], err)
+			return nil, fmt.Errorf("unable to get SMembers for key %s: %v", backlinkKeys[i], err)
 		}
 
 		linkSet := make(map[string]struct{}, len(members))
