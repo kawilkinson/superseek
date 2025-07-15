@@ -37,6 +37,7 @@ jobs:
       - name: Test if code is idiomatically formatted in crawler service
         working-directory: ./services/crawler 
         run: test -z "$(go fmt ./...)"
+
   indexer:
     name: Test indexer service
     runs-on: ubuntu-latest
@@ -117,7 +118,7 @@ jobs:
           go-version: "1.24.1"
           cache-dependency-path: services/pagerank/go.sum
       
-      - name: Make sure indexer compiles
+      - name: Make sure pagerank compiles
         working-directory: ./services/pagerank
         run: go build -v ./main.go
 
@@ -132,6 +133,39 @@ jobs:
         working-directory: ./services/pagerank
         run: gosec ./...
 
-      - name: Test if code is idiomatically formatted in image indexer service
+      - name: Test if code is idiomatically formatted in pagerank service
         working-directory: ./services/pagerank
+        run: test -z "$(go fmt ./...)"
+  
+  backlinks_processor:
+    name: Test backlinks processor service
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.1"
+          cache-dependency-path: services/backlinks_processor/go.sum
+      
+      - name: Make sure backlinks processor compiles
+        working-directory: ./services/backlinks_processor
+        run: go build -v ./main.go
+
+      - name: Make sure tests succeed
+        working-directory: ./services/backlinks_processor
+        run: go test ./... -cover
+
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run gosec
+        working-directory: ./services/backlinks_processor
+        run: gosec ./...
+
+      - name: Test if code is idiomatically formatted in backlinks processor service
+        working-directory: ./services/backlinks_processor
         run: test -z "$(go fmt ./...)"
