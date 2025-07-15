@@ -1,19 +1,20 @@
-package indexerutil
+package tfidfutils
 
 import "time"
 
 const (
-	Timeout               = 4 * time.Second
-	MaxIndexWords         = 1000
-	WordImagesOpThreshold = 500
-	ImageOpThreshold      = 100
-	ImgMinWidth           = 100
-	ImgMinHeight          = 100
+	Timeout             = 4 * time.Second
+	MaxIndexWords       = 1000
+	WordsOpThreshold    = 1000
+	MetadataOpThreshold = 100
+	OutlinksOpThreshold = 100
+	ImgMinWidth         = 100
+	ImgMinHeight        = 100
 
 	WordCollection       = "words"
-	WordImagesCollection = "word_images"
 	MetadataCollection   = "metadata"
-	ImageCollection      = "images"
+	OutlinkCollection    = "outlinks"
+	DictionaryCollection = "dictionary"
 
 	IndexerQueueKey      = "indexer_queue"
 	ImageIndexerQueueKey = "image_indexer_queue"
@@ -67,7 +68,7 @@ var popularDomains = map[string]struct{}{
 }
 
 // stop words grabbed from here https://gist.github.com/sebleier/554280
-var StopWordsSet = map[string]struct{}{
+var stopWordsSet = map[string]struct{}{
 	"i": {}, "me": {}, "my": {}, "myself": {}, "we": {}, "our": {},
 	"ours": {}, "ourselves": {}, "you": {}, "your": {}, "yours": {},
 	"yourself": {}, "yourselves": {}, "he": {}, "him": {}, "his": {},
