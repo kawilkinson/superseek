@@ -30,7 +30,7 @@ func (mc *MongoClient) CreateWordsBulk(ctx context.Context, ops []mongo.WriteMod
 		return nil, nil
 	}
 
-	return mc.PerformBatchOperations(ctx, ops, indexerutil.WordCollection)
+	return mc.PerformBatchOperations(ctx, ops, indexerutil.WordsCollection)
 }
 
 func (mc *MongoClient) GetMetadata(ctx context.Context, normalizedURL string) (*models.Metadata, error) {

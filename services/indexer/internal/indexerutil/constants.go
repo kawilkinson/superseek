@@ -9,7 +9,7 @@ const (
 	MetadataOpThreshold = 100
 	OutlinksOpThreshold = 100
 
-	WordCollection       = "words"
+	WordsCollection       = "words"
 	MetadataCollection   = "metadata"
 	OutlinkCollection    = "outlinks"
 	DictionaryCollection = "dictionary"
