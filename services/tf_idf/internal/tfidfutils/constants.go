@@ -11,7 +11,7 @@ const (
 	ImgMinWidth         = 100
 	ImgMinHeight        = 100
 
-	WordCollection       = "words"
+	WordsCollection       = "words"
 	MetadataCollection   = "metadata"
 	OutlinkCollection    = "outlinks"
 	DictionaryCollection = "dictionary"

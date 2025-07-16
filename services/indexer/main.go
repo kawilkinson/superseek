@@ -149,13 +149,13 @@ func main() {
 		redisClient.DeleteOutlinks(ctx, page.NormalizedURL)
 		redisClient.PushToImageIndexerQueue(ctx, page.NormalizedURL)
 
-		ops.wordOps = mongoClient.FlushIfNeeded(ctx, indexerutil.WordCollection, ops.wordOps, indexerutil.WordsOpThreshold)
+		ops.wordOps = mongoClient.FlushIfNeeded(ctx, indexerutil.WordsCollection, ops.wordOps, indexerutil.WordsOpThreshold)
 		ops.metadataOps = mongoClient.FlushIfNeeded(ctx, indexerutil.MetadataCollection, ops.metadataOps, indexerutil.MetadataOpThreshold)
 		ops.outlinkOps = mongoClient.FlushIfNeeded(ctx, indexerutil.OutlinkCollection, ops.outlinkOps, indexerutil.OutlinksOpThreshold)
 	}
 
 	log.Println("final flush...")
-	mongoClient.FlushIfAny(ctx, indexerutil.WordCollection, ops.wordOps)
+	mongoClient.FlushIfAny(ctx, indexerutil.WordsCollection, ops.wordOps)
 	mongoClient.FlushIfAny(ctx, indexerutil.MetadataCollection, ops.metadataOps)
 	mongoClient.FlushIfAny(ctx, indexerutil.OutlinkCollection, ops.outlinkOps)
 
