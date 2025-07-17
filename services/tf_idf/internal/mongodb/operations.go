@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/kawilkinson/superseek/services/tf_idf/internal/models"
 	"github.com/kawilkinson/superseek/services/tf_idf/internal/tfidfutils"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -25,7 +26,7 @@ func (mc *MongoClient) GetDocumentCount(ctx context.Context) (int, error) {
 	return int(result), nil
 }
 
-func (mc *MongoClient) GetUniqueWords(ctx context.Context) (*mongo.Cursor, error) {
+func (mc *MongoClient) GetUniqueWords(ctx context.Context) ([]models.WordItem, error) {
 	if mc.Client == nil {
 		return nil, fmt.Errorf("unable to run get unique words, no Mongo client found")
 	}
@@ -43,8 +44,23 @@ func (mc *MongoClient) GetUniqueWords(ctx context.Context) (*mongo.Cursor, error
 	if err != nil {
 		return nil, fmt.Errorf("unable to aggregate collection for unique words: %v", err)
 	}
+	defer cursor.Close(ctx)
 
-	return cursor, nil
+	var words []models.WordItem
+
+	for cursor.Next(ctx) {
+		var item models.WordItem
+		if err := cursor.Decode(&item); err != nil {
+			return nil, fmt.Errorf("failed to decode word item: %v", err)
+		}
+		words = append(words, item)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error: %v", err)
+	}
+
+	return words, nil
 }
 
 func (mc *MongoClient) GetWordDocumentCount(ctx context.Context, word string) (int, error) {
@@ -62,7 +78,7 @@ func (mc *MongoClient) GetWordDocumentCount(ctx context.Context, word string) (i
 	return int(count), nil
 }
 
-func (mc *MongoClient) GetWordDocuments(ctx context.Context, word string) (*mongo.Cursor, error) {
+func (mc *MongoClient) GetWordDocuments(ctx context.Context, word string) ([]models.WordEntry, error) {
 	if mc.Client == nil {
 		return nil, fmt.Errorf("unable to run get word documents, no Mongo client found")
 	}
@@ -73,8 +89,22 @@ func (mc *MongoClient) GetWordDocuments(ctx context.Context, word string) (*mong
 	if err != nil {
 		return nil, fmt.Errorf("unable to find word %s in collection: %v", word, err)
 	}
+	defer cursor.Close(ctx)
 
-	return cursor, nil
+	var entries []models.WordEntry
+	for cursor.Next(ctx) {
+		var entry models.WordEntry
+		if err := cursor.Decode(&entry); err != nil {
+			return nil, fmt.Errorf("unable to decode word entry for word %s: %v", word, err)
+		}
+		entries = append(entries, entry)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error while iterating word %s: %v", word, err)
+	}
+
+	return entries, nil
 }
 
 func (mc *MongoClient) UpdatePageTfidfOp(ctx context.Context, word string, url string, idf, tfidf float64) (mongo.WriteModel, error) {

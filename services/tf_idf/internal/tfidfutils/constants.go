@@ -6,12 +6,14 @@ const (
 	Timeout             = 4 * time.Second
 	MaxIndexWords       = 1000
 	WordsOpThreshold    = 1000
+	OperationsThreshold = 1000
+	MaxWorkerThreads    = 4
 	MetadataOpThreshold = 100
 	OutlinksOpThreshold = 100
 	ImgMinWidth         = 100
 	ImgMinHeight        = 100
 
-	WordsCollection       = "words"
+	WordsCollection      = "words"
 	MetadataCollection   = "metadata"
 	OutlinkCollection    = "outlinks"
 	DictionaryCollection = "dictionary"
