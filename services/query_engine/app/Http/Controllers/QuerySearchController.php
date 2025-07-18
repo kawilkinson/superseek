@@ -96,4 +96,9 @@ class QuerySearchController extends Controller
             'backlinks' => $enrichedBacklinks,
         ]);
     }
+
+    public function get_top_images($query, $page = 1, $perPage = 5)
+    {
+        
+    }
 }
