@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class QuerySearchController extends Controller 
 {
-    public function get_page_connections(Request $request)
+    public function getPageConnections(Request $request)
     {
         $url = $request->input('url');
         if (!$url) {
@@ -97,8 +97,90 @@ class QuerySearchController extends Controller
         ]);
     }
 
-    public function get_top_images($query, $page = 1, $perPage = 5)
+    public function getTopImages($query, $page = 1, $perPage = 5)
     {
+        $query = str_replace('+', ' ', $query);
+        $words = explode(' ', strtolower($query));
+
+        $countPipeline = [
+            ['$match' => ['word' => ['$in' => $words]]],
+            ['$group' => ['_id' => '$url']],
+            ['$count' => 'total']
+        ];
+
+        $countResult = DB::connection('mongodb')
+            ->table('word_images')
+            ->raw(fn($collection) => $collection->aggregate($countPipeline)->toArray());
+
+        $totalResults = isset($countResult[0]) ? $countResult[0]['total'] : 0;
+
+        $paginationPipeline = [
+            ['$match' => ['word' => ['$in' => $words]]],
+            [
+                '$group' => [
+                    '_id' => '$url',
+                    'cumWeight' => ['$sum' => '$weight'],
+                    'matchedWords' => ['$addToSet' => '$word'],
+                    'matchCount' => ['$sum' => 1]
+                ]
+            ],
+            ['$sort' => ['matchCount' => -1, 'cumWeight' => -1]],
+            ['$skip' => ($page - 1) * $perPage],
+            ['$limit' => $perPage]
+        ];
+
+        $paginatedResults = DB::connection('mongodb')
+            ->table('word_images')
+            ->raw(function ($collection) use ($paginationPipeline) {
+                $cursor = $collection->aggregate($paginationPipeline, ['cursor' => ['batchSize' => 20]]);
+                $results = [];
+                foreach ($cursor as $document) {
+                    $results[] = $document;
+                }
+                return $results;
+            });
         
+        $urls = array_map(fn($result) => $result['_id'], $paginatedResults);
+
+        $imagesData = DB::connection('mongodb')->table('images')
+            ->whereIn('_id', $urls)
+            ->get();
+
+        $imageDataByUrl = [];
+        foreach ($imagesData as $data) {
+            $imageDataByUrl[$data->id] = $data;
+        }
+
+        $pageUrls = [];
+        foreach ($imageDataByUrl as $result) {
+            $pageUrls[] = $result->page_url ?? '';
+        }
+
+        $pageMetadataList = DB::connection('mongodb')->table('metadata')
+            ->whereIn('_id', $pageUrls)
+            ->get();
+
+        $pageMetadataByUrl = [];
+        foreach ($pageMetadataList as $meta) {
+            $pageMetadataByUrl[$meta->id] = $meta;
+        }
+
+        foreach ($paginatedResults as &$result) {
+            $imageData = $imageDataByUrl[$result['_id']] ?? null;
+            $result['alt'] = $imageData->alt ?? '';
+            $result['filename'] = $imageData->filename ?? '';
+            $result['page_url'] = $imageData->page_url ?? '';
+            $pageMetadata = $pageMetadataByUrl[$result['page_url']] ?? null;
+            $result['page_title'] = $pageMetadata->title ?? '';
+            $result['page_text'] = '';
+            $length = 100;
+            if (isset($pageMetadata->summary_text)) {
+                $result['page_text'] = strlen($pageMetadata->summary_text) > $length
+                    ? substr($pageMetadata->summary_text, 0, $length) . '...'
+                    : $pageMetadata->summary_text;
+            }
+        }
+
+        return [$paginatedResults, $totalResults];
     }
 }
