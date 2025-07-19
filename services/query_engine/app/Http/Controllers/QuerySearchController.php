@@ -313,7 +313,7 @@ class QuerySearchController extends Controller
         ]);
     }
 
-    public function search_images(Request $request)
+    public function searchImages(Request $request)
     {
         $suggestions = $request->input('suggestions');
         $originalQuery = $request->input('q');
