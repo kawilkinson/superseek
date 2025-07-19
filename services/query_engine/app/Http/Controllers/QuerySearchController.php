@@ -313,4 +313,105 @@ class QuerySearchController extends Controller
         ]);
     }
 
+    public function search_images(Request $request)
+    {
+        $suggestions = $request->input('suggestions');
+        $originalQuery = $request->input('q');
+        $query = $originalQuery;
+        if (!$query) {
+            $query = "";
+            return view('search-image-results', [
+                'query' => $query,
+                'results' => [],
+                'total' => 0,
+                'topImages' => [],
+                'suggestions' => $suggestions,
+                'originalQuery' => $originalQuery,
+            ]);
+        }
+
+        $query = str_replace('+', ' ', $query);
+        $words = explode(' ', strtolower($query));
+
+        $perPage = 20;
+        $page = $request->input('page' , 1);
+
+        [$paginatedResults, $totalResults] = $this->getTopImages($query, $page, $perPage);
+
+        return view('search-image-results', [
+            'query' => $query,
+            'results' => $paginatedResults,
+            'total' => $totalResults,
+            'topImages' => [],
+            'suggestions' => $suggestions,
+            'originalQuery' => $originalQuery,
+        ]);
+    }
+
+    public function getTopRankedPage(Request $request)
+    {
+        $results = DB::connection('mongodb')->table('pagerank')
+            ->orderBy('rank', 'desc')
+            ->limit(1)
+            ->get();
+        if ($results->count() <= 0) {
+            return null;
+        }
+
+        /** @var object $pageMetadata */
+        $pageMetadata = DB::connection('mongodb')->table('metadata')
+            ->where('_id', $results[0]->id)
+            ->first();
+        if ($pageMetadata) {
+            return null;
+        }
+
+        return [
+            'title' => $pageMetadata->title,
+            'url' => $pageMetadata->id,
+            'description' => $pageMetadata->description,
+            'last_crawled' => $pageMetadata->last_crawled,
+            'summary_text' => $pageMetadata->summary_text,
+        ];
+    }
+
+    public function getRandomPage(Request $request)
+    {
+        $document = DB::connection('mongodb')
+            ->table('metadata')
+            ->raw(function ($collection) {
+                return iterator_to_array(
+                    $collection->aggregate([
+                    ['$sample' => ['size' => 1]]
+                    ])
+                );
+            });
+        
+
+        if (empty($document)) {
+            return null;
+        }
+
+        $doc = $document[0];
+
+        return [
+            'title' => $doc['title'],
+            'url' => $doc['_id'],
+            'description' => $doc['description'],
+            'last_crawled' => $doc['last_crawled'],
+            'summary_text' => $doc['summary_text'],
+        ];
+    }
+
+    public function getDictionary()
+    {
+        $results = DB::connection('mongodb')
+            ->table('dictionary')
+            ->pluck('_id');
+        
+        return response()->json([
+            'status' => 'up',
+            'dictionary' => $results,
+        ]);
+    }
 }
