@@ -129,6 +129,7 @@ class QuerySearchController extends Controller
             ['$limit' => $perPage]
         ];
 
+        /** @var array $paginatedResults */
         $paginatedResults = DB::connection('mongodb')
             ->table('word_images')
             ->raw(function ($collection) use ($paginationPipeline) {
@@ -183,4 +184,133 @@ class QuerySearchController extends Controller
 
         return [$paginatedResults, $totalResults];
     }
+
+    public function stats()
+    {
+        $results = DB::connection('mongodb')->table('metadata')->count();
+
+        return response()->json([
+            'status' => 'up',
+            'pages' => $results,
+        ]);
+    }
+
+    public function search(Request $request)
+    {
+        $hasSuggestions = $request->input('hasSuggestions');
+        $originalQuery = $request->input('q');
+        $processedQuery = $request->input('processedQuery');
+        $query = $processedQuery;
+        if (!$query) {
+            $query = "";
+            return view('search-results', [
+                'query' => $query,
+                'results' => [],
+                'total' => 0,
+                'topImages' => [],
+                'suggestions' => $hasSuggestions,
+                'originalQuery' => $originalQuery,
+                'page' => 0,
+            ]);
+        }
+
+        $query = str_replace('+', ' ', $query);
+        $words = explode(' ', strtolower($query));
+
+        $perPage = 20;
+        $page = $request->input('page', 1);
+
+        $countPipeline = [
+            ['$match' => ['word' => ['$in' => $words]]],
+            ['$group' => ['_id' => '$url']],
+            ['$count' => 'total']
+        ];
+
+        $countResult = DB::connection('mongodb')
+            ->table('words')
+            ->raw(fn($collection) => $collection->aggregate($countPipeline)->toArray());
+        
+        $totalResults = isset($countResult[0]) ? $countResult[0]['total'] : 0;
+
+        $paginationPipeline = [
+            ['$match'=> ['word' => ['$in' => $words]]],
+            [
+                '$group' => [
+                    '_id' => '$url',
+                    'cumWeight' => ['$sum' => '$weight'],
+                    'matchedWords' => ['$addToSet' => '$word'],
+                    'matchCount' => ['$sum' => 1]
+                ]
+            ],
+            ['$sort' => ['matchCount' => -1, 'cumWeight' => -1]],
+            ['$skip' => ($page - 1) * $perPage],
+            ['$limit' => $perPage]
+        ];
+
+        /** @var array $paginatedResults */
+        $paginatedResults = DB::connection('mongodb')
+            ->table('words')
+            ->raw(function ($collection) use ($paginationPipeline) {
+                $cursor = $collection->aggregate($paginationPipeline, ['cursor' => ['batchSize' => 20]]);
+                $results = [];
+                foreach ($cursor as $document) {
+                    $results[] = $document;
+                }
+                return $results;
+            });
+        
+        $urls = array_map(fn($result) => $result['_id'], $paginatedResults);
+
+        $pageRank = DB::connection('mongodb')->table('pagerank')
+            ->whereIn('_id', $urls)
+            ->get();
+        
+        error_log('Page rank: ' . json_encode($pageRank));
+
+        $metadata = DB::connection('mongodb')->table('metadata')
+            ->whereIn('_id', $urls)
+            ->get();
+        
+        $metadataByUrl = [];
+        foreach ($metadata as $meta) {
+            $metadataByUrl[$meta->id] = $meta;
+        }
+
+        foreach ($paginatedResults as &$result) {
+            $resultMetadata = $metadataByUrl[$result['_id']] ?? null;
+            $result['description'] = $resultMetadata->description ?? '';
+            $result['last_crawled'] = $resultMetadata->last_cralwed ?? '';
+            $result['summary_text'] = $resultMetadata->summary_text ?? '';
+            $result['title'] = $resultMetadata->title ?? '';
+
+            $result['pagerank'] = $pageRankByUrl[$result['_id']] ?? 0;
+
+            $tfidfWeight = $result['cumWeight'];
+            $pageRankWeight = $result['pagerank'];
+
+            $combinedScore = (0.6 * $tfidfWeight) + (0.4 * $pageRankWeight);
+
+            $result['combinedScore'] = $combinedScore;
+        }
+
+        usort($paginatedResults, function ($a, $b) {
+            return $b['combinedScore'] <=> $a['combinedScore'];
+        });
+
+        $topImages = [];
+        if ($page == 1) {
+            [$topImages, $unused] = $this->getTopImages($query, $page, 5);
+        }
+
+        return view('search-results', [
+            'query' => $query,
+            'results' => $paginatedResults,
+            'total' => $totalResults,
+            'topImages' => $topImages,
+            'suggestions' => $hasSuggestions,
+            'originalQuery' => $originalQuery,
+            'page' => $page,
+        ]);
+    }
+
 }
