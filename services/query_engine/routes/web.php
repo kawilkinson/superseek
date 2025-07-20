@@ -3,5 +3,9 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    if (config('app.env') === 'local') {
+        return response()->json(['message' => 'Welcome to Superseek!']);
+    } else {
+        return redirect('https://superseek.app');
+    }
 });
