@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class QuerySearchController extends Controller 
 {
@@ -14,7 +15,7 @@ class QuerySearchController extends Controller
             return response()->json(['error' => 'URL is required'], 400);
         }
 
-        error_log('URL: ' . $url);
+        Log::info('URL: ' . $url);
 
         $outlinksData = DB::connection('mongodb')
             ->table('outlinks')
@@ -265,7 +266,7 @@ class QuerySearchController extends Controller
             ->whereIn('_id', $urls)
             ->get();
         
-        error_log('Page rank: ' . json_encode($pageRank));
+        Log::info('Page rank: ' . $pageRank);
 
         $metadata = DB::connection('mongodb')->table('metadata')
             ->whereIn('_id', $urls)
