@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\QuerySearchController;
 use App\Http\Controllers\RedisController;
+use App\Http\Middleware\FuzzySearch;
+use App\Http\Middleware\StoreSearchTerm;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api')->controller(QuerySearchController::class)->group(function () {
-    Route::get('/search', 'search')->name('search'); // @todo integrate Levenshtein distance using middleware for this route
+    Route::get('/search', 'search')->name('search')->middleware([FuzzySearch::class, StoreSearchTerm::class]);
     Route::get('/search-images', 'searchImages')->name('search-images');
     Route::get('/dictionary', 'getDictionary')->name('dictionary');
     Route::get('/stats', 'stats')->name('stats');
