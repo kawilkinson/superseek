@@ -17,7 +17,8 @@
                 $suggestion = "Did you mean $query? ";
             }
         @endphp
-        <span id="suggestion">{{ $suggestion }}</span><span>Showing {{ $total }} results for {{ $query }}</span>
+        <span id="suggestion">{{ $suggestion }}</span><span>Showing {{ $total }} results for 
+            {{ $query }}</span>
         @if ($suggestions)
             <p>Search for <a id="suggestion-link"
                     href="{{ route('search', ['processed_query' => $originalQuery]) }}">{{ $originalQuery }}</a>
@@ -55,6 +56,7 @@
             <x-pagination-bar totalResults="{{ $total }}" />
         </div>
     </div>
+    <!-- Footer -->
      <footer>
         <p> <a href="https://github.com/kawilkinson/superseek">Support/Contribute to the project!</a></p>
         <p>
