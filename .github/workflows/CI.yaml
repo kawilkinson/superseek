@@ -23,7 +23,7 @@ jobs:
         working-directory: ./services/crawler
         run: go build -v ./main.go
 
-      - name: Make sure tests succeed
+      - name: Make sure crawler tests succeed
         working-directory: ./services/crawler
         run: go test ./... -cover
 
@@ -56,7 +56,7 @@ jobs:
         working-directory: ./services/indexer
         run: go build -v ./main.go
 
-      - name: Make sure tests succeed
+      - name: Make sure indexer tests succeed
         working-directory: ./services/indexer
         run: go test ./... -cover
 
@@ -85,11 +85,11 @@ jobs:
           go-version: "1.24.1"
           cache-dependency-path: services/image_indexer/go.sum
       
-      - name: Make sure indexer compiles
+      - name: Make sure image indexer compiles
         working-directory: ./services/image_indexer
         run: go build -v ./main.go
 
-      - name: Make sure tests succeed
+      - name: Make sure image indexer tests succeed
         working-directory: ./services/image_indexer
         run: go test ./... -cover
 
@@ -122,7 +122,7 @@ jobs:
         working-directory: ./services/pagerank
         run: go build -v ./main.go
 
-      - name: Make sure tests succeed
+      - name: Make sure pagerank tests succeed
         working-directory: ./services/pagerank
         run: go test ./... -cover
 
@@ -155,7 +155,7 @@ jobs:
         working-directory: ./services/backlinks_processor
         run: go build -v ./main.go
 
-      - name: Make sure tests succeed
+      - name: Make sure backlinks processor tests succeed
         working-directory: ./services/backlinks_processor
         run: go test ./... -cover
 
