@@ -14,7 +14,7 @@ const (
 	CrawlerQueueKey = "crawler_queue"
 	ResumeCrawl     = "RESUME_CRAWL"
 
-	NormalizedURLPrefix = "normalized_url"
+	NormalizedURLPrefix = "normalized_url" // normalized_url keys stay in Redis database so crawler knows to skip them
 	PagePrefix          = "page_data"
 	ImagePrefix         = "image_data"
 	PageImagesPrefix    = "page_images"

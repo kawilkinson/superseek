@@ -34,7 +34,7 @@ func main() {
 
 	err = db.PushURLToQueue(ctx, startingURL, 0)
 	if err != nil {
-		log.Fatalf("FATAL error pushing starting URL to the queue: %v\n", err)
+		log.Printf("error pushing starting URL to the queue: %v\ncontinuing...\n", err)
 	}
 	log.Printf("starting queue with %v\n", startingURL)
 
