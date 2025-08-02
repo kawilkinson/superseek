@@ -100,7 +100,7 @@ func (cfg *Config) CrawlPage(ctx context.Context, db *redisdb.RedisDatabase) {
 
 		err = db.PushURLToQueue(ctx, URL, score)
 		if err != nil {
-			log.Printf("error trying to push URL to queue to update score")
+			log.Printf("error trying to push URL to queue to update score: %v\n", err)
 			continue
 		}
 
