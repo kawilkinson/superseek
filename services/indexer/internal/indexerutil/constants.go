@@ -14,7 +14,7 @@ const (
 	OutlinkCollection    = "outlinks"
 	DictionaryCollection = "dictionary"
 
-	IndexerQueueKey      = "indexer_queue"
+	IndexerQueueKey      = "pages_queue"
 	ImageIndexerQueueKey = "image_indexer_queue"
 	SignalQueueKey       = "signal_queue"
 	ResumeCrawl          = "RESUME_CRAWL"

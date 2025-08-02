@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/kawilkinson/search-engine/internal/controllers"
 	"github.com/kawilkinson/search-engine/internal/crawlutil"
 	"github.com/kawilkinson/search-engine/internal/pages"
@@ -14,6 +15,11 @@ import (
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, using OS environment variables")
+	}
+
 	maxConcurrency := flag.Int("max-concurrency", 10, "Max number of concurrent channels")
 	maxPages := flag.Int("max-pages", 100, "Max number of pages able to be done at once")
 	flag.Parse()
@@ -27,7 +33,7 @@ func main() {
 	ctx := context.Background()
 
 	db := &redisdb.RedisDatabase{}
-	err := db.ConnectToRedis(ctx, redisHost, redisPort, redisPassword, redisDB)
+	err = db.ConnectToRedis(ctx, redisHost, redisPort, redisPassword, redisDB)
 	if err != nil {
 		log.Printf("unable to connect to redis database: %v\n", err)
 	}
@@ -94,5 +100,6 @@ func loadEnv(key, fallback string) string {
 		return envVariable
 	}
 
+	log.Printf("unable to load environment variable %s, using string fallback %s\n", key, fallback)
 	return fallback
 }

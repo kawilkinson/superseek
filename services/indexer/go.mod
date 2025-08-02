@@ -4,7 +4,9 @@ go 1.24.1
 
 require (
 	github.com/abadojack/whatlanggo v1.0.1
+	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.11.0
+	go.mongodb.org/mongo-driver v1.17.4
 	go.mongodb.org/mongo-driver/v2 v2.2.2
 	golang.org/x/net v0.41.0
 )

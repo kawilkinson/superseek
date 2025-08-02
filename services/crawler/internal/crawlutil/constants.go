@@ -9,7 +9,7 @@ const (
 	MinScore              = -1000
 	ImgCtrlExpirationTime = 1
 
-	IndexerQueueKey = "indexer_queue"
+	IndexerQueueKey = "pages_queue"
 	SignalQueueKey  = "signal_queue"
 	CrawlerQueueKey = "crawler_queue"
 	ResumeCrawl     = "RESUME_CRAWL"
