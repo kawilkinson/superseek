@@ -48,7 +48,7 @@ func main() {
 	linksController := controllers.CreateLinksController(db)
 	imageController := controllers.CreateImageController(db)
 
-	cfg, err := spider.Configure(baseURL, *maxConcurrency, *maxPages)
+	cfg, err := spider.Configure(baseURL, maxConcurrency, *maxPages)
 	if err != nil {
 		log.Fatalf("FATAL error configuring crawler: %v\n", err)
 	}
@@ -79,20 +79,22 @@ func main() {
 		}
 
 		log.Println("creating workers...")
-		cfg.Wg.Add(1)
-		go cfg.CrawlPage(ctx, db)
+		for range cfg.MaxConcurrency {
+			cfg.Wg.Add(1)
+			go cfg.CrawlPage(ctx, db, pageController, linksController, imageController)
+		}
+
 		cfg.Wg.Wait()
 
-		pageController.SavePages(ctx, cfg)
-		linksController.SaveLinks(ctx, cfg)
-		imageController.SaveImages(ctx, cfg)
+		pageController.SavePages(ctx, cfg.Pages)
+		linksController.SaveLinks(ctx, cfg.Backlinks, cfg.Outlinks)
+		imageController.SaveImages(ctx, cfg.Images)
 
 		cfg.Pages = make(map[string]*pages.Page)
 		cfg.Outlinks = make(map[string]*pages.PageNode)
 		cfg.Backlinks = make(map[string]*pages.PageNode)
 		cfg.Images = make(map[string][]*pages.Image)
 	}
-
 }
 
 func loadEnv(key, fallback string) string {

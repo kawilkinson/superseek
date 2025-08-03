@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/kawilkinson/search-engine/internal/crawlutil"
+	"github.com/kawilkinson/search-engine/internal/pages"
 	"github.com/kawilkinson/search-engine/internal/redisdb"
-	"github.com/kawilkinson/search-engine/internal/spider"
 )
 
 type LinksController struct {
@@ -19,22 +19,22 @@ func CreateLinksController(db *redisdb.RedisDatabase) *LinksController {
 	}
 }
 
-func (linksCtrl *LinksController) SaveLinks(ctx context.Context, cfg *spider.Config) {
+
+
+func (linksCtrl *LinksController) SaveLinks(ctx context.Context, backlinks, outlinks map[string]*pages.PageNode) {
 	pipeline := linksCtrl.db.Client.Pipeline()
 
 	log.Println("saving backlinks...")
-	data := cfg.Backlinks
-	count := len(data)
-	for key, backlinks := range data {
+	count := len(backlinks)
+	for key, backlinks := range backlinks {
 		for _, link := range backlinks.GetLinks() {
 			pipeline.SAdd(ctx, crawlutil.BacklinksPrefix+":"+key, link)
 		}
 	}
 
 	log.Println("saving outlinks...")
-	data = cfg.Outlinks
-	count += len(data)
-	for key, outlinks := range data {
+	count += len(outlinks)
+	for key, outlinks := range outlinks {
 		for _, link := range outlinks.GetLinks() {
 			pipeline.SAdd(ctx, crawlutil.OutlinksPrefix+":"+key, link)
 		}

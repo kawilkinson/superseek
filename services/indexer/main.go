@@ -185,6 +185,6 @@ func loadEnvInt(key string, fallback int) int {
 		}
 	}
 
-	log.Printf("unable to load environment variable %s, using int fallback %s\n", key, fallback)
+	log.Printf("unable to load environment variable %s, using int fallback %d\n", key, fallback)
 	return fallback
 }

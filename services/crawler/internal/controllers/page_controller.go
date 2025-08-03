@@ -7,7 +7,6 @@ import (
 	"github.com/kawilkinson/search-engine/internal/crawlutil"
 	"github.com/kawilkinson/search-engine/internal/pages"
 	"github.com/kawilkinson/search-engine/internal/redisdb"
-	"github.com/kawilkinson/search-engine/internal/spider"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -63,13 +62,12 @@ func (pgCtrl *PageController) GetAllPages(ctx context.Context) map[string]*pages
 	return redisPages
 }
 
-func (pgCtrl *PageController) SavePages(ctx context.Context, cfg *spider.Config) {
-	data := cfg.Pages
-	log.Printf("writing %d entries to the Redis database...\n", len(data))
+func (pgCtrl *PageController) SavePages(ctx context.Context, currPages map[string]*pages.Page) {
+	log.Printf("writing %d entries to the Redis database...\n", len(currPages))
 
 	pipeline := pgCtrl.db.Client.Pipeline()
 
-	for _, page := range data {
+	for _, page := range currPages {
 		pageHash, err := pages.HashPage(page)
 		if err != nil {
 			log.Printf("unable to hash page for Redis database %s: %v\n", page.NormalizedURL, err)
@@ -86,6 +84,6 @@ func (pgCtrl *PageController) SavePages(ctx context.Context, cfg *spider.Config)
 	if err != nil {
 		log.Printf("unable to execute page pipeline: %v\n", err)
 	} else {
-		log.Printf("successfully wrote %d page entires to the Redis database\n", len(data))
+		log.Printf("successfully wrote %d page entires to the Redis database\n", len(currPages))
 	}
 }
