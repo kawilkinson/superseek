@@ -13,8 +13,8 @@ import (
 
 func (cfg *Config) CrawlPage(ctx context.Context, db *redisdb.RedisDatabase,
 	pageController *controllers.PageController,
-    linksController *controllers.LinksController,
-    imageController *controllers.ImageController) {
+	linksController *controllers.LinksController,
+	imageController *controllers.ImageController) {
 	cfg.concurrencyControl <- struct{}{}
 	defer func() {
 		<-cfg.concurrencyControl
