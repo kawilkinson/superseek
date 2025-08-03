@@ -20,6 +20,7 @@ type Config struct {
 	baseURL            *url.URL
 	concurrencyControl chan struct{}
 	maxPages           int
+	MaxConcurrency     int
 }
 
 // func (cfg *Config) addPageVisit(normalizedURL string) (isFirst bool) {
@@ -43,7 +44,7 @@ func (cfg *Config) isMaxPagesReached() (maxReached bool) {
 	return len(cfg.Pages) >= cfg.maxPages
 }
 
-func Configure(baseURL string, maxConcurrency, maxPages int) (*Config, error) {
+func Configure(baseURL string, maxConcurrency *int, maxPages int) (*Config, error) {
 	parsedBaseURL, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing provided base URL: %v", err)
@@ -57,8 +58,9 @@ func Configure(baseURL string, maxConcurrency, maxPages int) (*Config, error) {
 		Backlinks:          make(map[string]*pages.PageNode),
 		Images:             make(map[string][]*pages.Image),
 		baseURL:            parsedBaseURL,
-		concurrencyControl: make(chan struct{}, maxConcurrency),
+		concurrencyControl: make(chan struct{}, *maxConcurrency),
 		maxPages:           maxPages,
+		MaxConcurrency:     *maxConcurrency,
 	}, nil
 }
 

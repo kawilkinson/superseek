@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/kawilkinson/search-engine/internal/controllers"
 	"github.com/kawilkinson/search-engine/internal/crawlutil"
 	"github.com/kawilkinson/search-engine/internal/pages"
 	"github.com/kawilkinson/search-engine/internal/redisdb"
 )
 
-func (cfg *Config) CrawlPage(ctx context.Context, db *redisdb.RedisDatabase) {
+func (cfg *Config) CrawlPage(ctx context.Context, db *redisdb.RedisDatabase,
+	pageController *controllers.PageController,
+    linksController *controllers.LinksController,
+    imageController *controllers.ImageController) {
 	cfg.concurrencyControl <- struct{}{}
 	defer func() {
 		<-cfg.concurrencyControl
@@ -106,6 +110,6 @@ func (cfg *Config) CrawlPage(ctx context.Context, db *redisdb.RedisDatabase) {
 
 		cfg.Wg.Add(1)
 		log.Printf("crawling to next URL: %s...\n", URL)
-		go cfg.CrawlPage(ctx, db)
+		go cfg.CrawlPage(ctx, db, pageController, linksController, imageController)
 	}
 }
