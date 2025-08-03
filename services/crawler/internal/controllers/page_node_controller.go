@@ -19,8 +19,6 @@ func CreateLinksController(db *redisdb.RedisDatabase) *LinksController {
 	}
 }
 
-
-
 func (linksCtrl *LinksController) SaveLinks(ctx context.Context, backlinks, outlinks map[string]*pages.PageNode) {
 	pipeline := linksCtrl.db.Client.Pipeline()
 

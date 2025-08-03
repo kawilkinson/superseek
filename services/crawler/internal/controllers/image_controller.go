@@ -21,31 +21,31 @@ func CreateImageController(db *redisdb.RedisDatabase) *ImageController {
 }
 
 func (imgCtrl *ImageController) SaveImages(ctx context.Context, images map[string][]*pages.Image) {
-    pipeline := imgCtrl.db.Client.Pipeline()
+	pipeline := imgCtrl.db.Client.Pipeline()
 
-    log.Println("saving images...")
-    count := 0
+	log.Println("saving images...")
+	count := 0
 
-    for normalizedURL, imageData := range images {
-        for _, image := range imageData {
-            imageKey := crawlutil.ImagePrefix + ":" + image.NormalizedSourceURL
-            pipeline.HSet(ctx, imageKey, map[string]interface{}{
-                "page_url": image.NormalizedPageURL,
-                "alt":      image.Alt,
-            })
+	for normalizedURL, imageData := range images {
+		for _, image := range imageData {
+			imageKey := crawlutil.ImagePrefix + ":" + image.NormalizedSourceURL
+			pipeline.HSet(ctx, imageKey, map[string]interface{}{
+				"page_url": image.NormalizedPageURL,
+				"alt":      image.Alt,
+			})
 
-            pipeline.Expire(ctx, imageKey, crawlutil.ImgCtrlExpirationTime*time.Hour)
-            count++
+			pipeline.Expire(ctx, imageKey, crawlutil.ImgCtrlExpirationTime*time.Hour)
+			count++
 
-            pageImagesKey := crawlutil.PageImagesPrefix + ":" + normalizedURL
-            pipeline.SAdd(ctx, pageImagesKey, image.NormalizedSourceURL)
-        }
-    }
+			pageImagesKey := crawlutil.PageImagesPrefix + ":" + normalizedURL
+			pipeline.SAdd(ctx, pageImagesKey, image.NormalizedSourceURL)
+		}
+	}
 
-    _, err := pipeline.Exec(ctx)
-    if err != nil {
-        log.Printf("unable to save images to Redis: %v\n", err)
-    } else {
-        log.Printf("successfully wrote %d image entries to the Redis database\n", count)
-    }
+	_, err := pipeline.Exec(ctx)
+	if err != nil {
+		log.Printf("unable to save images to Redis: %v\n", err)
+	} else {
+		log.Printf("successfully wrote %d image entries to the Redis database\n", count)
+	}
 }
