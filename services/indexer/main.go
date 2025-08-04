@@ -169,6 +169,7 @@ func main() {
 	os.Exit(0)
 }
 
+// string env loading due to needing a string value for database connections
 func loadEnvString(key string, fallback string) string {
 	if envVariable, exists := os.LookupEnv(key); exists {
 		return envVariable
@@ -178,6 +179,7 @@ func loadEnvString(key string, fallback string) string {
 	return fallback
 }
 
+// string env loading due to needing an int value for database connections
 func loadEnvInt(key string, fallback int) int {
 	if envVariable, exists := os.LookupEnv(key); exists {
 		if intVal, err := strconv.Atoi(envVariable); err == nil {
