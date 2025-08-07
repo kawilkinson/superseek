@@ -171,8 +171,8 @@ func main() {
 
 // string env loading due to needing a string value for database connections
 func loadEnvString(key string, fallback string) string {
-	if envVariable, exists := os.LookupEnv(key); exists {
-		return envVariable
+	if strVal, exists := os.LookupEnv(key); exists {
+		return strVal
 	}
 
 	log.Printf("unable to load environment variable %s, using string fallback %s\n", key, fallback)
