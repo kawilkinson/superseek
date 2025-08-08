@@ -45,7 +45,7 @@ func main() {
 
 	ctx := context.Background()
 
-	log.Println("initializing Redis connection...")
+	log.Println("initializing Redis database connection...")
 
 	redisClient, err := redisdb.ConnectToRedis(ctx, redisPort, redisDatabase, redisHost, redisPassword)
 	if err != nil {
@@ -53,7 +53,7 @@ func main() {
 		log.Fatal("exiting...")
 	}
 
-	log.Println("initializing Mongo connection...")
+	log.Println("initializing Mongo database connection...")
 
 	mongoClient, err := mongodb.ConnectToMongo(ctx, mongoPort, mongoHost, mongoUsername, mongoPassword, mongoDatabase)
 	if err != nil {
