@@ -32,14 +32,14 @@ func InsertBacklinks(ctx context.Context, backlinksColl *mongo.Collection, backl
 func InsertOutlinks(ctx context.Context, outlinksColl *mongo.Collection, outlinksCount map[string]int) {
 	cursorOutlinks, err := outlinksColl.Find(ctx, bson.D{})
 	if err != nil {
-		log.Fatalf("unable to get outlinks from Mongo Database")
+		log.Fatalf("unable to get outlinks from Mongo Database: %v", err)
 	}
 	defer cursorOutlinks.Close(ctx)
 
 	for cursorOutlinks.Next(ctx) {
 		var doc struct {
-			ID    string   `bson:"_id"`
-			Links []string `bson:"links"`
+			ID    string                 `bson:"_id"`
+			Links map[string]interface{} `bson:"links"`
 		}
 
 		if err := cursorOutlinks.Decode(&doc); err != nil {
@@ -47,5 +47,9 @@ func InsertOutlinks(ctx context.Context, outlinksColl *mongo.Collection, outlink
 		}
 
 		outlinksCount[doc.ID] = len(doc.Links)
+	}
+
+	if err := cursorOutlinks.Err(); err != nil {
+		log.Fatalf("cursor error: %v", err)
 	}
 }

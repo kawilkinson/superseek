@@ -32,6 +32,7 @@ func IsValidImage(url string, minWidth, minHeight int) bool {
 	img, _, err := image.Decode(resp.Body)
 	if err != nil {
 		log.Printf("unable to decode image %s: %v\n", absoluteURL, err)
+		return false
 	}
 
 	width := img.Bounds().Dx()

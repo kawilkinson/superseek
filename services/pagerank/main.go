@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/joho/godotenv"
 	"github.com/kawilkinson/superseek/services/pagerank/internal/mongodb"
 	"github.com/kawilkinson/superseek/services/pagerank/internal/pagerankutils"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -13,6 +14,11 @@ import (
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, using OS environment variables")
+	}
+
 	mongoHost := loadEnvString("MONGO_HOST", "localhost")
 	mongoPort := loadEnvInt("MONGO_PORT", 27017)
 	mongoPassword := loadEnvString("MONGO_PASSWORD", "")
@@ -21,7 +27,7 @@ func main() {
 
 	ctx := context.Background()
 
-	mongoClient, err := mongodb.ConnectToMongo(ctx, mongoPort, mongoDatabase, mongoHost, mongoUsername, mongoPassword)
+	mongoClient, err := mongodb.ConnectToMongo(ctx, mongoPort, mongoHost, mongoUsername, mongoPassword, mongoDatabase)
 	if err != nil {
 		log.Printf("unable to connect to Mongo database: %v", err)
 		log.Fatal("exiting...")
@@ -59,15 +65,17 @@ func main() {
 	log.Println("page rank values are now saved to the Mongo database")
 }
 
+// string env loading due to needing a string value for database connections
 func loadEnvString(key string, fallback string) string {
-	if envVariable, exists := os.LookupEnv(key); exists {
-		return envVariable
+	if strVal, exists := os.LookupEnv(key); exists {
+		return strVal
 	}
 
-	log.Println("unable to load environment variable, using string fallback")
+	log.Printf("unable to load environment variable %s, using string fallback %s\n", key, fallback)
 	return fallback
 }
 
+// string env loading due to needing an int value for database connections
 func loadEnvInt(key string, fallback int) int {
 	if envVariable, exists := os.LookupEnv(key); exists {
 		if intVal, err := strconv.Atoi(envVariable); err == nil {
@@ -75,6 +83,6 @@ func loadEnvInt(key string, fallback int) int {
 		}
 	}
 
-	log.Println("unable to load environment variable, using integer fallback")
+	log.Printf("unable to load environment variable %s, using int fallback %d\n", key, fallback)
 	return fallback
 }

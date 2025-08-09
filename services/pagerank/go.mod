@@ -2,7 +2,10 @@ module github.com/kawilkinson/superseek/services/pagerank
 
 go 1.24.1
 
-require go.mongodb.org/mongo-driver/v2 v2.2.2
+require (
+	github.com/joho/godotenv v1.5.1
+	go.mongodb.org/mongo-driver/v2 v2.2.2
+)
 
 require (
 	github.com/golang/snappy v1.0.0 // indirect

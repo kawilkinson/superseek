@@ -11,6 +11,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/joho/godotenv"
 	"github.com/kawilkinson/superseek/services/image_indexer/internal/indexerutil"
 	"github.com/kawilkinson/superseek/services/image_indexer/internal/mongodb"
 	"github.com/kawilkinson/superseek/services/image_indexer/internal/redisdb"
@@ -23,6 +24,11 @@ type Operations struct {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, using OS environment variables")
+	}
+
 	redisHost := loadEnvString("REDIS_HOST", "localhost")
 	redisPort := loadEnvInt("REDIS_PORT", 6379)
 	redisPassword := loadEnvString("REDIS_PASSWORD", "")
@@ -48,7 +54,7 @@ func main() {
 
 	log.Println("initializing Mongo connection...")
 
-	mongoClient, err := mongodb.ConnectToMongo(ctx, mongoPort, mongoDatabase, mongoHost, mongoUsername, mongoPassword)
+	mongoClient, err := mongodb.ConnectToMongo(ctx, mongoPort, mongoHost, mongoUsername, mongoPassword, mongoDatabase)
 	if err != nil {
 		log.Printf("unable to connect to Mongo database: %v", err)
 		log.Fatal("exiting...")
@@ -201,15 +207,17 @@ func main() {
 	os.Exit(0)
 }
 
+// string env loading due to needing a string value for database connections
 func loadEnvString(key string, fallback string) string {
-	if envVariable, exists := os.LookupEnv(key); exists {
-		return envVariable
+	if strVal, exists := os.LookupEnv(key); exists {
+		return strVal
 	}
 
-	log.Println("unable to load environment variable, using string fallback")
+	log.Printf("unable to load environment variable %s, using string fallback %s\n", key, fallback)
 	return fallback
 }
 
+// string env loading due to needing an int value for database connections
 func loadEnvInt(key string, fallback int) int {
 	if envVariable, exists := os.LookupEnv(key); exists {
 		if intVal, err := strconv.Atoi(envVariable); err == nil {
@@ -217,6 +225,6 @@ func loadEnvInt(key string, fallback int) int {
 		}
 	}
 
-	log.Println("unable to load environment variable, using integer fallback")
+	log.Printf("unable to load environment variable %s, using int fallback %d\n", key, fallback)
 	return fallback
 }

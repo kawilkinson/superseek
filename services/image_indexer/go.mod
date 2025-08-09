@@ -3,6 +3,7 @@ module github.com/kawilkinson/superseek/services/image_indexer
 go 1.24.1
 
 require (
+	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.11.0
 	go.mongodb.org/mongo-driver/v2 v2.2.2
 )
