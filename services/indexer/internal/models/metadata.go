@@ -1,9 +1,7 @@
 package models
 
 import (
-	"fmt"
 	"log"
-	"time"
 )
 
 type Metadata struct {
@@ -11,24 +9,14 @@ type Metadata struct {
 	Title       string
 	Description string
 	SummaryText string
-	LastCrawled time.Time
+	LastCrawled string
 	Keywords    map[string]int
 }
 
-func FromMap(data map[string]interface{}) (*Metadata, error) {
+func FromMap(data map[string]interface{}, pageData *Page) (*Metadata, error) {
 	if data == nil {
 		log.Println("no data found for fromMap function for Metadata, skipping...")
 		return nil, nil
-	}
-
-	lastCrawledStr, isString := data["last_crawled"].(string)
-	if !isString {
-		return nil, fmt.Errorf("'last_crawled' in metadata must be a string")
-	}
-
-	lastCrawled, err := time.Parse(time.RFC1123, lastCrawledStr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid time format, not able to detect RFC1123: %v", err)
 	}
 
 	keywords := make(map[string]int)
@@ -47,7 +35,7 @@ func FromMap(data map[string]interface{}) (*Metadata, error) {
 		Title:       getString(data, "title"),
 		Description: getString(data, "description"),
 		SummaryText: getString(data, "summary_text"),
-		LastCrawled: lastCrawled,
+		LastCrawled: pageData.LastCrawled.String(),
 		Keywords:    keywords,
 	}, nil
 }
