@@ -93,7 +93,7 @@ func main() {
 		}
 
 		oldMetadata, err := mongoClient.GetMetadata(ctx, page.NormalizedURL)
-		if err == nil && oldMetadata != nil && oldMetadata.LastCrawled.Equal(page.LastCrawled) {
+		if err == nil && oldMetadata != nil && oldMetadata.LastCrawled == page.LastCrawled.String() {
 			log.Printf("no updates to %s. skipping...\n", oldMetadata.ID)
 			continue
 		}
@@ -102,13 +102,16 @@ func main() {
 		if err != nil {
 			log.Printf("skipping %s, error with parsing HTML: %v\n", pageID, err)
 			continue
-		} else if htmlData["language"] != "English" {
-			log.Printf("skipping %s, language is not in english...\n", pageID)
-			continue
-		} else if len(htmlData["text"].([]string)) == 0 {
-			log.Printf("skipping %s, unable to process its text...\n", pageID)
-			continue
+			// } else if htmlData["language"] != "English" {
+			// 	log.Printf("skipping %s, language is not in english...\n", pageID)
+			// 	continue
 		}
+
+		// text := htmlData["text"].([]string)
+		// if text == nil {
+		// 	log.Printf("skipping %s, unable to process its text...\n", pageID)
+		// 	continue
+		// }
 
 		log.Printf("counting words from %s...\n", pageID)
 		wordsFrequency := indexerutil.CountWords(htmlData["text"].([]string))
@@ -128,7 +131,7 @@ func main() {
 			ops.wordOps = append(ops.wordOps, op)
 		}
 
-		metadata, err := models.FromMap(htmlData)
+		metadata, err := models.FromMap(htmlData, page)
 		if err != nil {
 			log.Printf("unable to convert metadata in html data for %s: %v", pageID, err)
 		}
