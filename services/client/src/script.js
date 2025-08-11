@@ -1,3 +1,4 @@
+// comment out the backendURL depending on where the app is being used
 // const backendURL = `https://api.superseek.app/api`;
 const backendURL = `http://127.0.0.1:8000/api`;
 
