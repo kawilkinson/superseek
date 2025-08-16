@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log(`Pinging backend at ${backendURL}...`);
 
-    fetch(`$(backendURL)/stats`)
+    fetch(`${backendURL}/stats`)
         .then((res) => res.json())
         .then((data) => {
             if (data.status === "up") {
@@ -116,11 +116,15 @@ async function search(query) {
 
 async function random() {
     try {
-        // const randomUrl = `${backendURL}/random`;
-        const randomUrl = `http://localhost:8000/api/random`;
+        const randomUrl = `${backendURL}/random`;
 
+        const res = await fetch(randomUrl, { method: "HEAD" });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        // only redirect if it's reachable
         window.location.href = randomUrl;
     } catch (error) {
-        console.log(error.message);
+        console.error("Random endpoint error:", error);
+        serverDown();
     }
 }
