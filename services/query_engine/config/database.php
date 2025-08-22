@@ -113,10 +113,14 @@ return [
         ],
 
         'mongodb' => [
-            'driver' => 'mongodb',
-            'dsn' => env('MONGODB_URI', 'mongodb://localhost:27017'),
-            'database' => env('MONGODB_DATABASE', 'test'),
-        ]
+            'driver'   => 'mongodb',
+            'host'     => env('MONGO_HOST', '127.0.0.1'),
+            'port'     => env('MONGO_PORT', 27017),
+            'database' => env('MONGO_DB'),
+            'username' => env('MONGO_USERNAME'),
+            'password' => env('MONGO_PASSWORD'),
+            'options'  => []
+        ],
     ],
 
     /*
